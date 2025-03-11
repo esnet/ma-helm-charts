@@ -1,0 +1,176 @@
+suite: test GCPGatewayPolicy
+templates:
+  - 05-tls-policy-gke.yaml
+tests:
+  - it: should create GCPGatewayPolicy when all conditions are met
+    set:
+      config.gateway.enabled: true
+      config.gateway.type: "gke"
+      config.gateway.name: "my-gateway"
+      config.certificate.tlsPolicy.enabled: true
+      config.namespace: "default"
+    asserts:
+      - hasDocuments:
+          count: 1
+      - isKind:
+          of: GCPGatewayPolicy
+      - isAPIVersion:
+          of: networking.gke.io/v1
+      - equal:
+          path: metadata.name
+          value: tls-cipher-policy
+      - equal:
+          path: metadata.namespace
+          value: default
+      - equal:
+          path: spec.targetRef.group
+          value: gateway.networking.k8s.io
+      - equal:
+          path: spec.targetRef.kind
+          value: Gateway
+      - equal:
+          path: spec.targetRef.name
+          value: my-gateway
+      - equal:
+          path: spec.default.sslPolicy
+          value: gke-gateway-ssl-policy
+
+  - it: should NOT create GCPGatewayPolicy when gateway is disabled
+    set:
+      config.gateway.enabled: false
+      config.gateway.type: "gke"
+      config.certificate.tlsPolicy.enabled: true
+      config.namespace: "default"
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: should NOT create GCPGatewayPolicy when gateway type is not gke
+    set:
+      config.gateway.enabled: true
+      config.gateway.type: "aws"
+      config.certificate.tlsPolicy.enabled: true
+      config.namespace: "default"
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: should NOT create GCPGatewayPolicy when gateway type is nginx
+    set:
+      config.gateway.enabled: true
+      config.gateway.type: "nginx"
+      config.certificate.tlsPolicy.enabled: true
+      config.namespace: "default"
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: should NOT create GCPGatewayPolicy when tlsPolicy is disabled
+    set:
+      config.gateway.enabled: true
+      config.gateway.type: "gke"
+      config.certificate.tlsPolicy.enabled: false
+      config.namespace: "default"
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: should use custom namespace when specified
+    set:
+      config.gateway.enabled: true
+      config.gateway.type: "gke"
+      config.gateway.name: "my-gateway"
+      config.certificate.tlsPolicy.enabled: true
+      config.namespace: "custom-namespace"
+    asserts:
+      - equal:
+          path: metadata.namespace
+          value: custom-namespace
+
+  - it: should use custom gateway name when specified
+    set:
+      config.gateway.enabled: true
+      config.gateway.type: "gke"
+      config.gateway.name: "production-gateway"
+      config.certificate.tlsPolicy.enabled: true
+      config.namespace: "default"
+    asserts:
+      - equal:
+          path: spec.targetRef.name
+          value: production-gateway
+
+  - it: should fail when gateway.enabled is true but gateway.type is missing
+    set:
+      config.gateway.enabled: true
+      config.gateway.type: null
+      config.certificate.tlsPolicy.enabled: true
+      config.namespace: "default"
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: should NOT create when only gateway.enabled is true
+    set:
+      config.gateway.enabled: true
+      config.gateway.type: "aws"
+      config.certificate.tlsPolicy.enabled: false
+      config.namespace: "default"
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: should NOT create when only gateway.type is gke
+    set:
+      config.gateway.enabled: false
+      config.gateway.type: "gke"
+      config.certificate.tlsPolicy.enabled: true
+      config.namespace: "default"
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: should NOT create when only tlsPolicy.enabled is true
+    set:
+      config.gateway.enabled: false
+      config.gateway.type: "aws"
+      config.certificate.tlsPolicy.enabled: true
+      config.namespace: "default"
+    asserts:
+      - hasDocuments:
+          count: 0
+
+  - it: should have correct API version and kind structure
+    set:
+      config.gateway.enabled: true
+      config.gateway.type: "gke"
+      config.gateway.name: "test-gateway"
+      config.certificate.tlsPolicy.enabled: true
+      config.namespace: "test-ns"
+    asserts:
+      - equal:
+          path: apiVersion
+          value: networking.gke.io/v1
+      - equal:
+          path: kind
+          value: GCPGatewayPolicy
+      - exists:
+          path: spec.targetRef
+      - exists:
+          path: spec.default
+      - exists:
+          path: spec.default.sslPolicy
+
+  - it: should match production values
+    values:
+      - ../values.yaml
+    set:
+      config.gateway.enabled: true
+      config.gateway.type: "gke"
+      config.certificate.tlsPolicy.enabled: true
+    asserts:
+      - isKind:
+          of: GCPGatewayPolicy
+      - isNotEmpty:
+          path: spec.targetRef.name
+      - isNotEmpty:
+          path: metadata.namespace

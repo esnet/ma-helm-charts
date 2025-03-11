@@ -1,0 +1,14 @@
+{{- if and .Values.config.gateway.enabled (eq .Values.config.gateway.type "gke") .Values.config.certificate.tlsPolicy.enabled }}
+apiVersion: networking.gke.io/v1
+kind: GCPGatewayPolicy
+metadata:
+  name: tls-cipher-policy
+  namespace: {{ .Values.config.namespace }}
+spec:
+  targetRef:
+    group: gateway.networking.k8s.io
+    kind: Gateway
+    name: {{ .Values.config.gateway.name }}
+  default:
+    sslPolicy: {{ .Values.config.certificate.tlsPolicy.name }}
+{{- end }}

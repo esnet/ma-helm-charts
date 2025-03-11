@@ -1,0 +1,21 @@
+{{- if and .Values.config.gateway.enabled (eq .Values.config.gateway.type "envoy") }}
+apiVersion: gateway.networking.k8s.io/v1
+kind: GatewayClass
+metadata:
+  name: envoy
+{{- if .Values.config.argocd_annotation }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "-15"
+{{- end }}
+spec:
+  controllerName: gateway.envoyproxy.io/gatewayclass-controller
+  parametersRef:
+    group: gateway.envoyproxy.io
+    kind: EnvoyProxy
+    name: external-http-proxy
+{{- if .Values.config.gateway.gateway_namespace_override }}
+    namespace: {{ .Values.config.gateway.gateway_namespace_override }}
+{{- else }}
+    namespace: {{ .Values.config.namespace }}
+{{- end }}
+{{- end }}

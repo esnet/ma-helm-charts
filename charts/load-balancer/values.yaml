@@ -1,0 +1,63 @@
+config:
+  argocd_annotation: true
+  namespace: appNamespace
+  email: esnet-seg-ma@lbl.gov
+  domains:
+    - 34.59.30.245.nip.io
+  certificate:
+    name: tls-cert
+    issuer: letsencrypt-prod
+    issuer_server: https://acme-v02.api.letsencrypt.org/directory
+    ## If staging use:
+    # server: https://acme-staging-v02.api.letsencrypt.org/directory
+    # issuer: letsencrypt-staging (does not need to be update but helpful to avoid confusion)
+    tlsPolicy:
+      enabled: true
+      name: gke-gateway-ssl-policy
+      minVersion: "1.2"
+      ciphers:
+        - ECDHE_ECDSA_WITH_AES_128_CBC_SHA
+        - ECDHE_ECDSA_WITH_AES_128_GCM_SHA256
+        - ECDHE_ECDSA_WITH_AES_256_CBC_SHA
+        - ECDHE_ECDSA_WITH_AES_256_GCM_SHA384
+        - ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256
+        - ECDHE_RSA_WITH_AES_128_CBC_SHA
+        - ECDHE_RSA_WITH_AES_128_GCM_SHA256
+        - ECDHE_RSA_WITH_AES_256_CBC_SHA
+        - ECDHE_RSA_WITH_AES_256_GCM_SHA384
+        - ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256
+        - RSA_WITH_AES_128_CBC_SHA
+        - RSA_WITH_AES_128_GCM_SHA256
+        - RSA_WITH_AES_256_CBC_SHA
+        - RSA_WITH_AES_256_GCM_SHA384
+  gateway:
+    enabled: true
+    # gateway_namespace_override: envoy-gateway-system
+    name: external-http
+    namespace_policy: All
+    type: gke
+    class_name: gke-l7-global-external-managed
+    ## envoy
+    proxy_name: external-http-proxy
+    # type: envoy
+    # class_name: envoy
+    ipv4:
+      enabled: true
+      address: 8.2.2.2
+      address_type: NamedAddress
+    ipv6:
+      enabled: true
+      address: "2600::"
+      address_type: NamedAddress
+    routes:
+      - name: http
+        port: 80
+        protocol: HTTP
+      - name: https
+        port: 443
+        protocol: HTTPS
+        use_tls: true
+        mode: Terminate
+        include_cert: true
+
+extraResources: []

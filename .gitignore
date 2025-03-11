@@ -1,0 +1,5 @@
+# Ignore downloaded chart dependencies
+charts/*.tgz
+
+# But keep Chart.lock
+!Chart.lock

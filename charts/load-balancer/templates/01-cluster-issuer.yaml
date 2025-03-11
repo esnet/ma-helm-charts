@@ -1,0 +1,24 @@
+{{- if and .Values.config.gateway.enabled  }}
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: {{ .Values.config.certificate.issuer }}
+{{- if .Values.config.argocd_annotation }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "-15"
+{{- end }}
+spec:
+  acme:
+    server: {{ .Values.config.certificate.issuer_server }}
+    email: {{ .Values.config.email }}
+    privateKeySecretRef:
+      name: {{ .Values.config.certificate.issuer }}
+    solvers:
+      - http01:
+          gatewayHTTPRoute:
+            parentRefs:
+              - name: {{ .Values.config.gateway.name }}
+                namespace: {{ .Values.config.namespace}}
+                kind: Gateway
+
+{{- end }}

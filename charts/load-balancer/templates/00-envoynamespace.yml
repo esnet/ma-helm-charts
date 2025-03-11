@@ -1,0 +1,6 @@
+{{- if and .Values.config.gateway.enabled .Values.config.gateway.gateway_namespace_override }}
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: {{ .Values.config.gateway.gateway_namespace_override }}
+{{- end }}

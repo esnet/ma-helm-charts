@@ -1,0 +1,24 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: {{ .Values.config.certificate.name }}
+  namespace: {{ .Values.config.namespace }}
+  annotations:
+    cert-manager.io/issue-temporary-certificate: "true"
+    acme.cert-manager.io/http01-edit-in-place: "true"
+{{- if .Values.config.argocd_annotation }}
+    argocd.argoproj.io/sync-wave: "-10"
+{{- end }}
+spec:
+  secretName: {{ .Values.config.certificate.name }}
+  issuerRef:
+    name: {{ .Values.config.certificate.issuer }}
+    kind: ClusterIssuer
+  dnsNames:
+  {{- range $domain := .Values.config.domains }}
+  - {{ $domain }}
+  {{- end }}
+  privateKey:
+    algorithm: RSA
+    size: 2048
+  renewBefore: 720h

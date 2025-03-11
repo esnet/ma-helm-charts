@@ -1,0 +1,40 @@
+{{- if and .Values.config.gateway.enabled (eq .Values.config.gateway.type "gke") }}
+apiVersion: gateway.networking.k8s.io/v1
+kind: Gateway
+metadata:
+  name: {{ .Values.config.gateway.name }}
+  namespace: {{ .Values.config.namespace }}
+{{- if .Values.config.argocd_annotation }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "-10"
+{{- end }}
+spec:
+  gatewayClassName: {{ .Values.config.gateway.class_name }}
+  addresses:
+{{- if .Values.config.gateway.ipv4.enabled }}
+    - type: {{ .Values.config.gateway.ipv4.address_type }}
+      value: {{ .Values.config.gateway.ipv4.address | quote }}
+{{- end }}
+{{- if .Values.config.gateway.ipv6.enabled }}
+    - type: {{ .Values.config.gateway.ipv6.address_type }}
+      value: {{ .Values.config.gateway.ipv6.address | quote }}
+{{- end }}
+  listeners:
+{{- range $route := .Values.config.gateway.routes }}
+    - name: {{ $route.name | default "http" }}
+      port: {{ $route.port | default 443 }}
+      protocol: {{ $route.protocol | default "HTTPS" }}
+      allowedRoutes:
+        namespaces:
+          from: {{ $.Values.config.gateway.namespace_policy }}
+{{- if $route.use_tls }}
+      tls:
+        mode: {{ $route.mode | default "Terminate" }}
+{{- if $route.include_cert }}
+        certificateRefs:
+          - name: {{ $.Values.config.certificate.name }}
+            kind: Secret
+{{- end }}
+{{- end }}
+{{- end }}
+{{- end }}

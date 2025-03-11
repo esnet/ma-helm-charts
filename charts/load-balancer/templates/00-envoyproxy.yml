@@ -1,0 +1,34 @@
+{{- if and .Values.config.gateway.enabled (eq .Values.config.gateway.type "envoy") }}
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: EnvoyProxy
+metadata:
+  name: {{ .Values.config.gateway.proxy_name }}
+{{- if .Values.config.gateway.gateway_namespace_override }}
+  namespace: {{ .Values.config.gateway.gateway_namespace_override }}
+{{- else }}
+  namespace: {{ .Values.config.namespace }}
+{{- end }}
+{{- if .Values.config.argocd_annotation }}
+  annotations:
+    argocd.argoproj.io/sync-wave: "-15"
+{{- end }}
+spec:
+  provider:
+    type: Kubernetes
+    kubernetes:
+      envoyService:
+        type: LoadBalancer
+        annotations:
+          networking.gke.io/load-balancer-type: "External"
+{{- if .Values.config.gateway.ipv6.enabled }}
+        loadBalancerIPs:
+          -  "{{ .Values.config.gateway.ipv4.address }}"
+          -  "{{ .Values.config.gateway.ipv6.address }}"
+        ipFamilyPolicy: PreferDualStack
+        ipFamilies:
+          - IPv4
+          - IPv6
+{{- else }}
+        loadBalancerIP: "{{ .Values.config.gateway.ipv4.address }}"
+{{- end }}
+{{- end }}

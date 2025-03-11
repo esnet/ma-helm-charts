@@ -1,0 +1,27 @@
+{{- if and .Values.config.gateway.enabled (eq .Values.config.gateway.type "envoy") .Values.config.certificate.tlsPolicy.enabled }}
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: ClientTrafficPolicy
+metadata:
+  name: {{ .Values.config.gateway.name }}-tls-policy
+{{- if .Values.config.gateway.gateway_namespace_override }}
+  namespace: {{ .Values.config.gateway.gateway_namespace_override }}
+{{- else }}
+  namespace: {{ .Values.config.namespace }}
+{{- end }}
+spec:
+  targetRef:
+    group: gateway.networking.k8s.io
+    kind: Gateway
+    name: {{ .Values.config.gateway.name }}
+  tls:
+    minVersion: {{ .Values.config.certificate.tlsPolicy.minVersion | quote }}
+    {{- if .Values.config.certificate.tlsPolicy.maxVersion }}
+    maxVersion: {{ .Values.config.certificate.tlsPolicy.maxVersion | quote }}
+    {{- end }}
+    {{- if .Values.config.certificate.tlsPolicy.ciphers }}
+    ciphers:
+      {{- range .Values.config.certificate.tlsPolicy.ciphers }}
+      - {{ . }}
+      {{- end }}
+    {{- end }}
+{{- end }}
