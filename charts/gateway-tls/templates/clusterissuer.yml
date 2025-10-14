@@ -1,0 +1,27 @@
+# templates/clusterissuer.yaml
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: {{ .Values.certificate.issuer }}
+spec:
+  acme:
+{{- if .Values.certificate.staging }}
+    server: https://acme-staging-v02.api.letsencrypt.org/directory
+{{- else }}
+    server: https://acme-v02.api.letsencrypt.org/directory
+{{- end }}
+    email: {{ .Values.email }}
+    privateKeySecretRef:
+      name: {{ .Values.certificate.issuer }}
+    solvers:
+    - http01:
+{{- if .Values.certificate.use_gateway }}
+        gatewayHTTPRoute:
+          parentRefs:
+          - name: {{ .Values.gateway.name }}
+            namespace: {{ .Values.namespace }}
+            kind: Gateway
+{{- else }}
+        ingress:
+          class: nginx
+{{- end }}

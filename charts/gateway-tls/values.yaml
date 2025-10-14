@@ -1,0 +1,44 @@
+# values.yaml
+namespace: dashboard
+domain:
+  - 34.59.30.245.nip.io
+
+email: esnet-seg-ma@lbl.gov
+
+gateway:
+  enabled: true
+  name: external-http
+  namespace_policy: All
+  className: gke-l7-global-external-managed
+  namespace: dashboard
+  ipv4:
+    enabled: true
+    address: 8.2.2.2
+    address_type: NamedAddress
+  ipv6:
+    enabled: false
+    address: "2600::"
+    address_type: NamedAddress
+  routes:
+    - name: http
+      port: 80
+      protocol: HTTP
+    - name: https
+      port: 443
+      protocol: HTTPS
+      use_tls: true
+      mode: Terminate
+      include_cert: true
+
+certificate:
+  name: tls-cert
+  issuer: letsencrypt-prod
+  staging: false
+  use_gateway: true
+
+tlsPolicy:
+  enabled: true
+  name: gke-gateway-ssl-policy
+
+httpsRedirect:
+  enabled: true

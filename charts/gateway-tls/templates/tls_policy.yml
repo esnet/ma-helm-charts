@@ -1,0 +1,15 @@
+{{- if .Values.tlsPolicy.enabled }}
+apiVersion: networking.gke.io/v1
+kind: GCPGatewayPolicy
+metadata:
+  name: tls-cipher-policy
+  namespace: {{ .Values.namespace }}
+spec:
+  targetRef:
+    group: gateway.networking.k8s.io
+    kind: Gateway
+    name: external-http
+  default:
+    sslPolicy:
+      {{ .Values.tlsPolicy.name }}
+{{- end }}
