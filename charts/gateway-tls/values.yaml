@@ -2,7 +2,7 @@
 namespace: dashboard
 createNamespace: true
 
-domain:
+domains:
   - 34.59.30.245.nip.io
 
 email: esnet-seg-ma@lbl.gov
@@ -12,7 +12,6 @@ gateway:
   name: external-http
   namespace_policy: All
   className: gke-l7-global-external-managed
-  namespace: dashboard
   ipv4:
     enabled: true
     address: 8.2.2.2
@@ -41,6 +40,12 @@ certificate:
 tlsPolicy:
   enabled: true
   name: gke-gateway-ssl-policy
-
-httpsRedirect:
-  enabled: true
+# cert-manager:
+#   enabled: true
+#   namespace: cert-manager
+#   crds:
+#     # This option decides if the CRDs should be installed
+#     # as part of the Helm installation.
+#     enabled: true
+#   config:
+#     enableGatewayAPI: true
