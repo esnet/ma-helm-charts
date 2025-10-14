@@ -1,5 +1,7 @@
 # values.yaml
 namespace: dashboard
+createNamespace: true
+
 domain:
   - 34.59.30.245.nip.io
 
