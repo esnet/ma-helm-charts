@@ -2,7 +2,7 @@ apiVersion: v1
 entries:
   clickhouse:
   - apiVersion: v2
-    created: "2025-10-17T13:40:28.489656-04:00"
+    created: "2025-10-17T13:54:22.045701-04:00"
     description: Clickhouse installation
     digest: 7014205dae7a3bd40caf65a47af9380d8eecc9bd10de2f1edd256fae9d801f94
     name: clickhouse
@@ -11,7 +11,20 @@ entries:
     version: 0.1.0
   gateway-tls:
   - apiVersion: v2
-    created: "2025-10-17T13:40:28.505485-04:00"
+    created: "2025-10-17T13:54:22.068267-04:00"
+    dependencies:
+    - condition: envoy.enabled
+      name: gateway-helm
+      repository: oci://registry-1.docker.io/envoyproxy
+      version: 1.5.3
+    description: Gateway API with TLS certificate
+    digest: a077f5e36695f5b132f110915566995de3f8d3b2c18cb8a8fd11f3980c484c8f
+    name: gateway-tls
+    urls:
+    - https://github.com/esnet/ma-helm-charts/raw/main/gateway-tls-0.1.2.tgz
+    version: 0.1.2
+  - apiVersion: v2
+    created: "2025-10-17T13:54:22.061221-04:00"
     dependencies:
     - condition: envoy.enabled
       name: gateway-helm
@@ -24,7 +37,7 @@ entries:
     - https://github.com/esnet/ma-helm-charts/raw/main/gateway-tls-0.1.1.tgz
     version: 0.1.1
   - apiVersion: v2
-    created: "2025-10-17T13:40:28.498255-04:00"
+    created: "2025-10-17T13:54:22.053751-04:00"
     dependencies:
     - condition: envoy.enabled
       name: gateway-helm
@@ -36,4 +49,4 @@ entries:
     urls:
     - https://github.com/esnet/ma-helm-charts/raw/main/gateway-tls-0.1.0.tgz
     version: 0.1.0
-generated: "2025-10-17T13:40:28.488925-04:00"
+generated: "2025-10-17T13:54:22.04547-04:00"
