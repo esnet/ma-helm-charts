@@ -1,0 +1,4 @@
+apiVersion: v2
+name: clickhouse
+description: Clickhouse installation
+version: 0.1.0

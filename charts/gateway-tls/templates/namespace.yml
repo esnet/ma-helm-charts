@@ -1,7 +1,7 @@
 # templates/namespace.yaml
-{{- if .Values.createNamespace }}
+{{- if and (eq .Values.envoy.enabled true) (eq .Values.envoy.create_namespace true) }}
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: {{ .Values.namespace }}
+  name: {{ .Values.envoy.namespace }}
 {{- end }}

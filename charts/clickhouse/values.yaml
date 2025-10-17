@@ -1,15 +1,11 @@
 # values.yaml
 namespace: dashboard
+createNamespace: true
 
 domains:
   - 34.59.30.245.nip.io
 
 email: esnet-seg-ma@lbl.gov
-
-envoy:
-  enabled: true
-  create_namespace: true
-  namespace: envoy-gateway-system
 
 gateway:
   enabled: true
@@ -44,3 +40,12 @@ certificate:
 tlsPolicy:
   enabled: true
   name: gke-gateway-ssl-policy
+# cert-manager:
+#   enabled: true
+#   namespace: cert-manager
+#   crds:
+#     # This option decides if the CRDs should be installed
+#     # as part of the Helm installation.
+#     enabled: true
+#   config:
+#     enableGatewayAPI: true

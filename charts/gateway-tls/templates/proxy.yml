@@ -1,0 +1,40 @@
+{{- if .Values.envoy.enabled }}
+apiVersion: gateway.networking.k8s.io/v1
+kind: GatewayClass
+metadata:
+  name: envoy
+spec:
+  controllerName: gateway.envoyproxy.io/gatewayclass-controller
+  parametersRef:
+    group: gateway.envoyproxy.io
+    kind: EnvoyProxy
+    name: external-http-proxy
+    namespace: {{ .Values.envoy.namespace }}
+---
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: EnvoyProxy
+metadata:
+  name: external-http-proxy
+  namespace: {{ .Values.envoy.namespace }}
+spec:
+  provider:
+    type: Kubernetes
+    kubernetes:
+      envoyService:
+        type: LoadBalancer
+        annotations:
+          networking.gke.io/load-balancer-type: "External"
+{{- if .Values.gateway.ipv6.enabled }}
+        loadBalancerIPs:
+          -  "{{ .Values.gateway.ipv4.address }}"
+          -  "{{ .Values.gateway.ipv6.address }}"
+        ipFamilyPolicy: PreferDualStack
+        ipFamilies:
+          - IPv4
+          - IPv6
+{{- else }}
+        loadBalancerIP: "{{ .Values.gateway.ipv4.address }}"
+{{- end }}
+
+
+{{- end }}

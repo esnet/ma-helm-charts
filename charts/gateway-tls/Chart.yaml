@@ -2,3 +2,9 @@ apiVersion: v2
 name: gateway-tls
 description: Gateway API with TLS certificate
 version: 0.1.0
+
+dependencies:
+  - name: gateway-helm
+    version: 1.5.3
+    repository: oci://registry-1.docker.io/envoyproxy
+    condition: envoy.enabled

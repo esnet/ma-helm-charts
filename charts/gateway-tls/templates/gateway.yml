@@ -6,7 +6,7 @@ metadata:
   namespace: {{ .Values.namespace }}
 spec:
   gatewayClassName: {{ .Values.gateway.className }}
-{{- if  (ne .Values.gateway.name "envoy") }}
+{{- if not .Values.envoy.enabled }}
   addresses:
 {{- if .Values.gateway.ipv4.enabled }}
   - type: {{ .Values.gateway.ipv4.address_type }}
