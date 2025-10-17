@@ -1,7 +1,7 @@
 apiVersion: v2
 name: gateway-tls
 description: Gateway API with TLS certificate
-version: 0.1.0
+version: 0.1.1
 
 dependencies:
   - name: gateway-helm
