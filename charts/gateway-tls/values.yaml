@@ -8,6 +8,8 @@ email: esnet-seg-ma@lbl.gov
 
 envoy:
   enabled: true
+  namespace: envoy-gateway-system
+  createNamespace: true
 
 gateway:
   enabled: true

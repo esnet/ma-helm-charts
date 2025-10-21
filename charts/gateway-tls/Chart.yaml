@@ -7,4 +7,5 @@ dependencies:
   - name: gateway-helm
     version: 1.5.3
     repository: oci://registry-1.docker.io/envoyproxy
+    alias: envoy
     condition: envoy.enabled

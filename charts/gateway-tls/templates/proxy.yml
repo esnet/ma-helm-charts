@@ -3,7 +3,7 @@ apiVersion: gateway.networking.k8s.io/v1
 kind: GatewayClass
 metadata:
   name: envoy
-  namespace: {{ .Values.namespace }}
+  namespace: {{ .Values.envoy.namespace }}
 spec:
   controllerName: gateway.envoyproxy.io/gatewayclass-controller
   parametersRef:
@@ -16,7 +16,7 @@ apiVersion: gateway.envoyproxy.io/v1alpha1
 kind: EnvoyProxy
 metadata:
   name: external-http-proxy
-  namespace: {{ .Values.namespace }}
+  namespace: {{ .Values.envoy.namespace }}
 spec:
   provider:
     type: Kubernetes
