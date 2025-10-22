@@ -1,51 +1,9 @@
-# values.yaml
-namespace: dashboard
-createNamespace: true
+namespace: clickhouse
 
-domains:
-  - 34.59.30.245.nip.io
-
-email: esnet-seg-ma@lbl.gov
-
-gateway:
-  enabled: true
-  name: external-http
-  namespace_policy: All
-  className: gke-l7-global-external-managed
-  ipv4:
-    enabled: true
-    address: 8.2.2.2
-    address_type: NamedAddress
-  ipv6:
-    enabled: false
-    address: "2600::"
-    address_type: NamedAddress
-  routes:
-    - name: http
-      port: 80
-      protocol: HTTP
-    - name: https
-      port: 443
-      protocol: HTTPS
-      use_tls: true
-      mode: Terminate
-      include_cert: true
-
-certificate:
-  name: tls-cert
-  issuer: letsencrypt-prod
-  staging: false
-  use_gateway: true
-
-tlsPolicy:
-  enabled: true
-  name: gke-gateway-ssl-policy
-# cert-manager:
-#   enabled: true
-#   namespace: cert-manager
-#   crds:
-#     # This option decides if the CRDs should be installed
-#     # as part of the Helm installation.
-#     enabled: true
-#   config:
-#     enableGatewayAPI: true
+config:
+  tls_enabled: true
+  disk_volume_size: 1000Gi
+  log_volume_size: 10Gi
+  clickhouse: true
+  clickhouse_version: 25.9
+  operator_version: 0.24.1

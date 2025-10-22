@@ -1,0 +1,67 @@
+---
+# ClickHouse Keeper Cluster
+apiVersion: "clickhouse-keeper.altinity.com/v1"
+kind: "ClickHouseKeeperInstallation"
+metadata:
+  name: keeper-cluster
+  namespace: {{ .Values.namespace }}
+spec:
+  configuration:
+    clusters:
+      - name: keeper-cluster
+        layout:
+          replicasCount: 3
+    settings:
+      logger/level: "information"
+      logger/console: "true"
+      listen_host: "0.0.0.0"
+      keeper_server/four_letter_word_white_list: "*"
+      keeper_server/coordination_settings/raft_logs_level: "information"
+      prometheus/endpoint: "/metrics"
+      prometheus/port: "7000"
+      prometheus/metrics: "true"
+      prometheus/events: "true"
+      prometheus/asynchronous_metrics: "true"
+      prometheus/status_info: "false"
+
+  defaults:
+    templates:
+      podTemplate: default
+      dataVolumeClaimTemplate: default
+
+  templates:
+    podTemplates:
+      - name: default
+        spec:
+          affinity:
+            podAntiAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                - labelSelector:
+                    matchExpressions:
+                      - key: "app"
+                        operator: In
+                        values:
+                          - clickhouse-keeper
+                  topologyKey: "kubernetes.io/hostname"
+          containers:
+            - name: clickhouse-keeper
+              imagePullPolicy: IfNotPresent
+              image: "clickhouse/clickhouse-keeper:{{ .Values.config.clickhouse_version }}"
+              resources:
+                requests:
+                  memory: "256M"
+                  cpu: "1"
+                limits:
+                  memory: "4Gi"
+                  cpu: "2"
+          securityContext:
+            fsGroup: 101
+
+    volumeClaimTemplates:
+      - name: default
+        spec:
+          accessModes:
+            - ReadWriteOnce
+          resources:
+            requests:
+              storage: 10Gi
