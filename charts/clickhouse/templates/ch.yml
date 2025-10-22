@@ -133,11 +133,11 @@ spec:
               image: clickhouse/clickhouse-server:{{ .Values.config.clickhouse_version }}
               resources:
                 requests:
-                  memory: "8Gi"
-                  cpu: "4000m"
+                  memory: "{{ .Values.config.resources.ch.requests.memory }}"
+                  cpu:  "{{ .Values.config.resources.ch.requests.cpu}}"
                 limits:
-                  memory: "16Gi"
-                  cpu: "8000m"
+                  memory: "{{ .Values.config.resources.ch.limits.memory }}"
+                  cpu:  "{{ .Values.config.resources.ch.limits.cpu}}"
 {{- if .Values.config.tls_enabled }}
               volumeMounts:
                 - name: tls-certs

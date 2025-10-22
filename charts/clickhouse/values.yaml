@@ -10,6 +10,23 @@ config:
   disk_volume_size: 1000Gi
   log_volume_size: 10Gi
   clickhouse_version: 25.9
+  resources:
+    chk:
+      requests:
+        memory: 256M
+        cpu: 1
+      limits:
+        memory: 4Gi
+        cpu: 2
+
+    ch:
+      requests:
+        memory: 8Gi
+        cpu: 4000m
+      limits:
+        memory: 16Gi
+        cpu: 8000m
+
   domains:
     - localhost.nip.io
 

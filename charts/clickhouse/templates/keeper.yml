@@ -4,7 +4,7 @@ apiVersion: "clickhouse-keeper.altinity.com/v1"
 kind: "ClickHouseKeeperInstallation"
 metadata:
   name: keeper-cluster
-  namespace: {{ .Values.namespace }}
+  namespace: { { .Values.namespace } }
 spec:
   configuration:
     clusters:
@@ -49,11 +49,11 @@ spec:
               image: "clickhouse/clickhouse-keeper:{{ .Values.config.clickhouse_version }}"
               resources:
                 requests:
-                  memory: "256M"
-                  cpu: "1"
+                  memory: "{{ .Values.config.resources.chk.requests.memory }}"
+                  cpu: "{{ .Values.config.resources.chk.requests.cpu}}"
                 limits:
-                  memory: "4Gi"
-                  cpu: "2"
+                  memory: "{{ .Values.config.resources.chk.limits.memory }}"
+                  cpu: "{{ .Values.config.resources.chk.limits.cpu}}"
           securityContext:
             fsGroup: 101
 
