@@ -9,9 +9,7 @@ config:
   tls_cert_secret: tls-cert
   disk_volume_size: 1000Gi
   log_volume_size: 10Gi
-  clickhouse: true
   clickhouse_version: 25.9
-  operator_version: 0.24.1
   domains:
     - localhost.nip.io
 
