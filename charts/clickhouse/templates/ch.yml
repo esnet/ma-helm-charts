@@ -26,18 +26,30 @@ spec:
 
     # User configuration
     users:
-      admin/password: "{{ admin_password }}"
+      admin/password:
+        valueFrom:
+          secretKeyRef:
+            name: clickhouse-users
+            key: admin-password
       admin/networks/ip: "::/0"
       admin/profile: "default"
       admin/quota: "default"
       admin/access_management: "1"
 
-      readonly_user/password: "{{ ro_password }}"
+      readonly_user/password:
+        valueFrom:
+          secretKeyRef:
+            name: clickhouse-users
+            key: readonly-password
       readonly_user/networks/ip: "::/0"
       readonly_user/profile: "readonly"
       readonly_user/quota: "default"
 
-      backup_user/password: "{{ backup_password }}"
+      backup_user/password:
+        valueFrom:
+          secretKeyRef:
+            name: clickhouse-users
+            key: backup-password
       backup_user/networks/ip: "::/0"
       backup_user/profile: "default"
       backup_user/quota: "default"
@@ -118,7 +130,7 @@ spec:
         spec:
           containers:
             - name: clickhouse
-              image: clickhouse/clickhouse-server:{{ clickhouse_version }}
+              image: clickhouse/clickhouse-server:{{ .Values.config.clickhouse_version }}
               resources:
                 requests:
                   memory: "8Gi"
@@ -134,7 +146,7 @@ spec:
           volumes:
             - name: tls-certs
               secret:
-                secretName: {{ certificate_secret }}
+                secretName: {{ .Values.config.tls_cert_secret }}
 {{- end }}
 
     volumeClaimTemplates:
@@ -144,11 +156,11 @@ spec:
             - ReadWriteOnce
           resources:
             requests:
-              storage: {{ disk_volume_size }}
+              storage: {{ .Values.config.disk_volume_size }}
       - name: log-volume
         spec:
           accessModes:
             - ReadWriteOnce
           resources:
             requests:
-              storage: {{ log_volume_size }}
+              storage: {{ .Values.config.log_volume_size }}

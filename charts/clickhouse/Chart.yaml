@@ -1,4 +1,14 @@
 apiVersion: v2
 name: clickhouse
-description: Clickhouse installation
+description: Clickhouse Cluster Configuration. This assumes a the affinity CH operator has already been installed.
 version: 0.1.0
+## TODO:
+#   - Rewrite this incorporating a helmfile to manage dependencies
+# sources:
+# - https://docs.altinity.com/clickhouse-operator/
+# dependencies:
+#   - name: altinity-clickhouse-operator
+#     version: 0.25.4
+#     repository: https://helm.altinity.com
+#     alias: operator
+#     condition: operator.enabled

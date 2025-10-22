@@ -1,0 +1,38 @@
+# TLSRoute for native ClickHouse protocol (port 9440 - Passthrough)
+apiVersion: gateway.networking.k8s.io/v1alpha2
+kind: TLSRoute
+metadata:
+  name: clickhouse-tcp-secure
+  namespace: clickhouse
+spec:
+  parentRefs:
+    - name: external-http
+      sectionName: clickhouse-secure
+  hostnames:
+{{- range  $domain := .Values.config.domains  }}
+    - {{ $domain }}
+{{- end }}
+  rules:
+    - backendRefs:
+        - name: clickhouse-ch-cluster
+          port: 9440
+#
+---
+apiVersion: gateway.networking.k8s.io/v1alpha2
+kind: TLSRoute
+metadata:
+  name: clickhouse-https-web
+  namespace: clickhouse
+spec:
+  parentRefs:
+    - name: external-http
+      sectionName: ssl-validation
+  hostnames:
+{{- range  $domain := .Values.config.domains  }}
+    - {{ $domain }}
+{{- end }}
+  rules:
+    - backendRefs:
+        - name: clickhouse-ch-cluster
+          port: 8443
+---

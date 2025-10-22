@@ -44,3 +44,5 @@ certificate:
 tlsPolicy:
   enabled: true
   name: gke-gateway-ssl-policy
+
+extraResources: []
