@@ -20,6 +20,8 @@ config:
         cpu: 2
 
     ch:
+      shardCount: 1
+      replicasCount: 1
       requests:
         memory: 8Gi
         cpu: 4000m

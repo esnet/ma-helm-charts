@@ -18,8 +18,8 @@ spec:
     clusters:
       - name: ch-cluster
         layout:
-          shardsCount: 3
-          replicasCount: 2
+          shardsCount: {{ .Values.config.resources.ch.shardCount }}
+          replicasCount: {{ .Values.config.resources.ch.replicasCount }}
         schemaPolicy:
           replica: None
           shard: None
