@@ -1,0 +1,23 @@
+{{- if and .Values.envoy.enabled .Values.certificate.tlsPolicy.enabled }}
+apiVersion: gateway.envoyproxy.io/v1alpha1
+kind: ClientTrafficPolicy
+metadata:
+  name: {{ .Values.gateway.name }}-tls-policy
+  namespace: {{ .Values.namespace }}
+spec:
+  targetRef:
+    group: gateway.networking.k8s.io
+    kind: Gateway
+    name: {{ .Values.gateway.name }}
+  tls:
+    minVersion: {{ .Values.certificate.tlsPolicy.minVersion | quote }}
+    {{- if .Values.certificate.tlsPolicy.maxVersion }}
+    maxVersion: {{ .Values.certificate.tlsPolicy.maxVersion | quote }}
+    {{- end }}
+    {{- if .Values.certificate.tlsPolicy.ciphers }}
+    ciphers:
+      {{- range .Values.certificate.tlsPolicy.ciphers }}
+      - {{ . }}
+      {{- end }}
+    {{- end }}
+{{- end }}

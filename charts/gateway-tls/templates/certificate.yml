@@ -13,7 +13,7 @@ spec:
     name: {{ .Values.certificate.issuer }}
     kind: ClusterIssuer
   dnsNames:
-  {{- range  $domain := .Values.domains  }}
+  {{- range $domain := .Values.domains }}
   - {{ $domain }}
   {{- end }}
   privateKey:

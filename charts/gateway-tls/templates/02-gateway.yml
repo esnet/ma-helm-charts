@@ -4,6 +4,9 @@ kind: Gateway
 metadata:
   name: {{ .Values.gateway.name }}
   namespace: {{ .Values.namespace }}
+  annotations:
+    "helm.sh/hook": pre-install,pre-upgrade
+    "helm.sh/hook-weight": "-5"
 spec:
   gatewayClassName: {{ .Values.gateway.className }}
 {{- if not .Values.envoy.enabled }}

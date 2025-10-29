@@ -1,0 +1,47 @@
+============================================
+Gateway TLS Chart Installed Successfully!
+============================================
+
+Gateway Information:
+  Name:      {{ .Values.gateway.name }}
+  Namespace: {{ .Values.namespace }}
+  IP:        {{ .Values.gateway.ipv4.address }}
+  Domain:    {{ index .Values.domains 0 }}
+
+Certificate Status:
+  Name: {{ .Values.certificate.name }}
+
+To check certificate status:
+  kubectl get certificate {{ .Values.certificate.name }} -n {{ .Values.namespace }}
+  kubectl describe certificate {{ .Values.certificate.name }} -n {{ .Values.namespace }}
+
+{{- if not .Values.certificate.staging }}
+⚠️  IMPORTANT: Let's Encrypt Production
+{{- else }}
+ℹ️  Using Let's Encrypt Staging
+{{- end }}
+
+The certificate will be automatically issued by cert-manager.
+- First attempt starts immediately
+- If it fails, cert-manager retries after ~1 hour
+- You can force immediate retry with:
+  kubectl delete certificaterequest -n {{ .Values.namespace }} --all
+
+To monitor progress:
+  watch kubectl get certificate,certificaterequest,order,challenge -n {{ .Values.namespace }}
+
+Gateway Listeners:
+{{- range .Values.gateway.routes }}
+  - {{ .name }} (port {{ .port }}, {{ .protocol }})
+{{- end }}
+
+DNS Configuration Required:
+  {{ index .Values.domains 0 }} → {{ .Values.gateway.ipv4.address }}
+
+Verify DNS:
+  nslookup {{ index .Values.domains 0 }}
+
+Test Gateway:
+  curl -v http://{{ .Values.gateway.ipv4.address }}/
+
+============================================

@@ -40,9 +40,28 @@ certificate:
   issuer: letsencrypt-prod
   staging: false
   use_gateway: true
-
-tlsPolicy:
-  enabled: true
-  name: gke-gateway-ssl-policy
+  tlsPolicy:
+    enabled: true
+    name: gke-gateway-ssl-policy
+    minVersion: "1.2"
+    ciphers:
+      - ECDHE_ECDSA_WITH_AES_128_CBC_SHA
+      - ECDHE_ECDSA_WITH_AES_128_GCM_SHA256
+      - ECDHE_ECDSA_WITH_AES_256_CBC_SHA
+      - ECDHE_ECDSA_WITH_AES_256_GCM_SHA384
+      - ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256
+      - ECDHE_RSA_WITH_AES_128_CBC_SHA
+      - ECDHE_RSA_WITH_AES_128_GCM_SHA256
+      - ECDHE_RSA_WITH_AES_256_CBC_SHA
+      - ECDHE_RSA_WITH_AES_256_GCM_SHA384
+      - ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256
+      - RSA_WITH_AES_128_CBC_SHA
+      - RSA_WITH_AES_128_GCM_SHA256
+      - RSA_WITH_AES_256_CBC_SHA
+      - RSA_WITH_AES_256_GCM_SHA384
 
 extraResources: []
+
+waitJob:
+  image: "alpine/k8s:1.32.9"
+  timeout: 600

@@ -1,4 +1,4 @@
-{{- if .Values.tlsPolicy.enabled }}
+{{- if and (not .Values.envoy.enabled) .Values.certificate.tlsPolicy.enabled }}
 apiVersion: networking.gke.io/v1
 kind: GCPGatewayPolicy
 metadata:
@@ -11,5 +11,5 @@ spec:
     name: external-http
   default:
     sslPolicy:
-      {{ .Values.tlsPolicy.name }}
+      {{ .Values.certificate.tlsPolicy.name }}
 {{- end }}

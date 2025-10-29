@@ -1,0 +1,87 @@
+{{- if .Values.gateway.enabled }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ .Values.gateway.name }}-wait-gateway-ip
+  namespace: {{ .Values.namespace }}
+  annotations:
+    "helm.sh/hook": pre-install,pre-upgrade
+    "helm.sh/hook-weight": "-4"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  backoffLimit: 30
+  template:
+    metadata:
+      name: wait-for-gateway
+    spec:
+      restartPolicy: OnFailure
+      serviceAccountName: {{ .Values.gateway.name }}-waiter
+      containers:
+        - name: wait-for-gateway-ip
+          image: {{ .Values.waitJob.image | default "alpine/k8s:1.32.9" }}
+          command:
+            - /bin/sh
+            - -c
+            - |
+              set -e
+
+              GATEWAY_NAME="{{ .Values.gateway.name }}"
+              NAMESPACE="{{ .Values.namespace }}"
+              TIMEOUT={{ .Values.waitJob.timeout | default 600 }}
+              INTERVAL=5
+              ELAPSED=0
+
+              echo "============================================"
+              echo "Waiting for Gateway '$GATEWAY_NAME' to get an IP address..."
+              echo "Namespace: $NAMESPACE"
+              echo "Timeout: ${TIMEOUT}s"
+              echo "============================================"
+
+              while [ $ELAPSED -lt $TIMEOUT ]; do
+                # Try to get the Gateway IP
+                GATEWAY_IP=$(kubectl get gateway "$GATEWAY_NAME" \
+                  -n "$NAMESPACE" \
+                  -o jsonpath='{.status.addresses[0].value}' 2>/dev/null || echo "")
+
+                # Check if we got a valid IP
+                if [ ! -z "$GATEWAY_IP" ] && [ "$GATEWAY_IP" != "null" ]; then
+                  echo ""
+                  echo "✓ Gateway IP found: $GATEWAY_IP"
+                  echo ""
+
+                  # Store IP in ConfigMap for reference
+                  echo "Storing Gateway IP in ConfigMap..."
+                  kubectl create configmap {{ .Values.gateway.name }}-gateway-info \
+                    --from-literal=gateway-ip="$GATEWAY_IP" \
+                    --from-literal=gateway-name="$GATEWAY_NAME" \
+                    -n "$NAMESPACE" \
+                    --dry-run=client -o yaml | kubectl apply -f -
+
+                  echo "✓ Gateway is ready and IP stored!"
+                  echo "============================================"
+                  exit 0
+                fi
+
+                # Check Gateway programmed status for debugging
+                PROGRAMMED=$(kubectl get gateway "$GATEWAY_NAME" \
+                  -n "$NAMESPACE" \
+                  -o jsonpath='{.status.conditions[?(@.type=="Programmed")].status}' 2>/dev/null || echo "Unknown")
+
+                ACCEPTED=$(kubectl get gateway "$GATEWAY_NAME" \
+                  -n "$NAMESPACE" \
+                  -o jsonpath='{.status.conditions[?(@.type=="Accepted")].status}' 2>/dev/null || echo "Unknown")
+
+                echo "[${ELAPSED}/${TIMEOUT}s] Gateway IP not ready | Accepted: $ACCEPTED | Programmed: $PROGRAMMED"
+
+                sleep $INTERVAL
+                ELAPSED=$((ELAPSED + INTERVAL))
+              done
+
+              echo ""
+              echo "✗ Timeout waiting for Gateway IP after ${TIMEOUT} seconds"
+              echo "============================================"
+              echo "Gateway Status:"
+              kubectl get gateway "$GATEWAY_NAME" -n "$NAMESPACE" -o yaml
+              echo "============================================"
+              exit 1
+{{- end }}
