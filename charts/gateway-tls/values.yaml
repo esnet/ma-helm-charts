@@ -61,7 +61,3 @@ certificate:
       - RSA_WITH_AES_256_GCM_SHA384
 
 extraResources: []
-
-waitJob:
-  image: "alpine/k8s:1.32.9"
-  timeout: 600

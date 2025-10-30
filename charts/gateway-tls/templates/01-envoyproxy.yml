@@ -5,8 +5,7 @@ metadata:
   name: external-http-proxy
   namespace: {{ .Values.envoy.namespace }}
   annotations:
-    "helm.sh/hook": pre-install,pre-upgrade
-    "helm.sh/hook-weight": "-10"
+    argocd.argoproj.io/sync-wave: "-10"
 spec:
   provider:
     type: Kubernetes

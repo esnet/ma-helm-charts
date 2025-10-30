@@ -1,4 +1,4 @@
 apiVersion: v2
 name: gateway-tls
 description: Gateway API with TLS certificate
-version: 0.1.4
+version: 0.1.5
