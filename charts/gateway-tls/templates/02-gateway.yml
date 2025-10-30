@@ -5,7 +5,7 @@ metadata:
   name: {{ .Values.gateway.name }}
   namespace: {{ .Values.namespace }}
   annotations:
-    argocd.argoproj.io/sync-wave: "-5"  # Sync wave
+    argocd.argoproj.io/sync-wave: "-10"  # Sync wave
 spec:
   gatewayClassName: {{ .Values.gateway.className }}
 {{- if not .Values.envoy.enabled }}

@@ -2,7 +2,7 @@ apiVersion: v1
 entries:
   clickhouse:
   - apiVersion: v2
-    created: "2025-10-30T15:47:10.805951-04:00"
+    created: "2025-10-30T16:06:41.70202-04:00"
     description: Clickhouse Cluster Configuration. This assumes a the affinity CH
       operator has already been installed.
     digest: b386bb3dac93bb68efd3c82724664a39eb0ea902cafe1ffeda86e3e7014397f5
@@ -11,7 +11,7 @@ entries:
     - https://github.com/esnet/ma-helm-charts/raw/main/releases/clickhouse-0.1.3.tgz
     version: 0.1.3
   - apiVersion: v2
-    created: "2025-10-30T15:47:10.805812-04:00"
+    created: "2025-10-30T16:06:41.701845-04:00"
     description: Clickhouse Cluster Configuration. This assumes a the affinity CH
       operator has already been installed.
     digest: 11aacce1eb7bca47b0a3903cdc9ae6d62d379a53981fd5392dcc6e948708ac57
@@ -20,7 +20,7 @@ entries:
     - https://github.com/esnet/ma-helm-charts/raw/main/releases/clickhouse-0.1.2.tgz
     version: 0.1.2
   - apiVersion: v2
-    created: "2025-10-30T15:47:10.805664-04:00"
+    created: "2025-10-30T16:06:41.701381-04:00"
     description: Clickhouse Cluster Configuration. This assumes a the affinity CH
       operator has already been installed.
     digest: ec4f77ae4de8b633eb000a2aa3b1de301c2f1a93129ccbd2d04bcf0bd2dcb3c6
@@ -29,7 +29,7 @@ entries:
     - https://github.com/esnet/ma-helm-charts/raw/main/releases/clickhouse-0.1.1.tgz
     version: 0.1.1
   - apiVersion: v2
-    created: "2025-10-30T15:47:10.8055-04:00"
+    created: "2025-10-30T16:06:41.70117-04:00"
     description: Clickhouse Cluster Configuration. This assumes a the affinity CH
       operator has already been installed.
     digest: 4fe6c33947907af35f417dfc076fc286f9ca769259200248f4d872a0712b3860
@@ -39,7 +39,15 @@ entries:
     version: 0.1.0
   gateway-tls:
   - apiVersion: v2
-    created: "2025-10-30T15:47:10.82814-04:00"
+    created: "2025-10-30T16:06:41.725461-04:00"
+    description: Gateway API with TLS certificate
+    digest: de9877a064266ba4e3cf799f23ee603c3264fb2a04e237ca5290f6d0e53bb6da
+    name: gateway-tls
+    urls:
+    - https://github.com/esnet/ma-helm-charts/raw/main/releases/gateway-tls-0.1.8.tgz
+    version: 0.1.8
+  - apiVersion: v2
+    created: "2025-10-30T16:06:41.725275-04:00"
     description: Gateway API with TLS certificate
     digest: 7e7e0e133010732c434af48008054c3d0a21f9adf0ac675b6f861fe6b8292642
     name: gateway-tls
@@ -47,7 +55,7 @@ entries:
     - https://github.com/esnet/ma-helm-charts/raw/main/releases/gateway-tls-0.1.7.tgz
     version: 0.1.7
   - apiVersion: v2
-    created: "2025-10-30T15:47:10.827955-04:00"
+    created: "2025-10-30T16:06:41.725082-04:00"
     description: Gateway API with TLS certificate
     digest: 32ecf567b2cacdb8f506fd88589a00df43c621a43a4c8abe3c952b0aca192afb
     name: gateway-tls
@@ -55,7 +63,7 @@ entries:
     - https://github.com/esnet/ma-helm-charts/raw/main/releases/gateway-tls-0.1.6.tgz
     version: 0.1.6
   - apiVersion: v2
-    created: "2025-10-30T15:47:10.827775-04:00"
+    created: "2025-10-30T16:06:41.724887-04:00"
     description: Gateway API with TLS certificate
     digest: 656934b27b66bdb8ef23a02167d1d7b9945cf9e21d7dff1db2a9df1d83dbecf2
     name: gateway-tls
@@ -63,7 +71,7 @@ entries:
     - https://github.com/esnet/ma-helm-charts/raw/main/releases/gateway-tls-0.1.5.tgz
     version: 0.1.5
   - apiVersion: v2
-    created: "2025-10-30T15:47:10.827586-04:00"
+    created: "2025-10-30T16:06:41.724685-04:00"
     description: Gateway API with TLS certificate
     digest: ecdbbdbc309413d4f39afc2f48ded7f95aa44fa9f5502db03d9463283ae4acdd
     name: gateway-tls
@@ -71,7 +79,7 @@ entries:
     - https://github.com/esnet/ma-helm-charts/raw/main/releases/gateway-tls-0.1.4.tgz
     version: 0.1.4
   - apiVersion: v2
-    created: "2025-10-30T15:47:10.82736-04:00"
+    created: "2025-10-30T16:06:41.724459-04:00"
     description: Gateway API with TLS certificate
     digest: 95112a038a8daf4e93a9685ff8f5493fad151f5e8fa32511974a22341c07ad34
     name: gateway-tls
@@ -79,7 +87,7 @@ entries:
     - https://github.com/esnet/ma-helm-charts/raw/main/releases/gateway-tls-0.1.3.tgz
     version: 0.1.3
   - apiVersion: v2
-    created: "2025-10-30T15:47:10.827171-04:00"
+    created: "2025-10-30T16:06:41.724302-04:00"
     dependencies:
     - condition: envoy.enabled
       name: gateway-helm
@@ -92,7 +100,7 @@ entries:
     - https://github.com/esnet/ma-helm-charts/raw/main/releases/gateway-tls-0.1.2.tgz
     version: 0.1.2
   - apiVersion: v2
-    created: "2025-10-30T15:47:10.820051-04:00"
+    created: "2025-10-30T16:06:41.717175-04:00"
     dependencies:
     - condition: envoy.enabled
       name: gateway-helm
@@ -105,7 +113,7 @@ entries:
     - https://github.com/esnet/ma-helm-charts/raw/main/releases/gateway-tls-0.1.1.tgz
     version: 0.1.1
   - apiVersion: v2
-    created: "2025-10-30T15:47:10.813095-04:00"
+    created: "2025-10-30T16:06:41.709761-04:00"
     dependencies:
     - condition: envoy.enabled
       name: gateway-helm
@@ -117,4 +125,4 @@ entries:
     urls:
     - https://github.com/esnet/ma-helm-charts/raw/main/releases/gateway-tls-0.1.0.tgz
     version: 0.1.0
-generated: "2025-10-30T15:47:10.805288-04:00"
+generated: "2025-10-30T16:06:41.700915-04:00"
