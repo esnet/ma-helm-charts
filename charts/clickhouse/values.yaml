@@ -2,7 +2,7 @@ namespace: clickhouse
 
 operator:
   enabled: true
-  installCRDs: true # Make sure CRDs are installed
+  installCRDs: true
 
 config:
   tls_enabled: true
