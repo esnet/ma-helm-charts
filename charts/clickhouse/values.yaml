@@ -5,6 +5,12 @@ operator:
   installCRDs: true
 
 config:
+  gsm:
+    enabled: true
+    project_id: myProjectID
+    cluster_name: foobar
+    service_account: external-secrets-sa
+
   tls_enabled: true
   tls_cert_secret: tls-cert
   disk_volume_size: 1000Gi
