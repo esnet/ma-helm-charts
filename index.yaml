@@ -1,0 +1,15 @@
+apiVersion: v1
+entries:
+  load-balancer:
+  - apiVersion: v2
+    created: "2025-11-05T18:21:15.982182405Z"
+    description: Load Balancer and Configuration
+    digest: 738da4dbd9f1c43bdafcf7bc97ce7b2a020146e12657e95e382b75f9beaedd68
+    maintainers:
+    - email: esnet-seg-ma@lbl.gov
+      name: esnet
+    name: load-balancer
+    urls:
+    - load-balancer-0.1.0.tgz
+    version: 0.1.0
+generated: "2025-11-05T18:21:15.982193185Z"
