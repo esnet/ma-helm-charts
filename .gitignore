@@ -3,3 +3,4 @@ charts/*.tgz
 
 # But keep Chart.lock
 !Chart.lock
+charts/*/charts/

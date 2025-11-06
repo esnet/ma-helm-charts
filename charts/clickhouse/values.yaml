@@ -1,0 +1,81 @@
+namespace: clickhouse
+
+ch-operator:
+  enabled: false
+  commonAnnotations:
+    argocd.argoproj.io/sync-wave: "-15"
+
+config:
+  tls_enabled: true
+  tls_cert_secret: tls-cert
+  clickhouse_version: 25.9
+  domains:
+    - localhost.nip.io
+
+  chk:
+    name: "keeper-cluster"
+    resources:
+      # disk_volume_size: 20Gi
+      # replicasCount: 2
+      requests:
+        memory: 256M
+        cpu: 1
+      limits:
+        memory: 4Gi
+        cpu: 2
+  ch:
+    profiles:
+      - name: readonly
+        readonly: 1
+        max_memory_usage: "10000000000"
+      - name: "default"
+        readonly: 0
+        max_memory_usage: "10000000000"
+    files:
+      - name: "config.d/distributed_ddl.xml"
+        data: |
+          <clickhouse>
+            <distributed_ddl>
+              <path>/clickhouse/task_queue/ddl</path>
+            </distributed_ddl>
+          </clickhouse>
+
+    users:
+      # New User example
+      # - name: myUsers
+      #   password_secret:
+      #     name: "clickhouse_users"
+      #     key: "-myUsers-password"
+      #   allowed_ips: "::/0"
+      #   profile: "default"
+      #   quota: "default"
+      #   access_management: "1"
+
+      - name: admin
+        password_secret:
+          name: "clickhouse_users"
+          key: "admin-password"
+        access_management: "1"
+      - name: readonly_user
+        password_secret:
+          name: "clickhouse_users"
+          key: "readonly-password"
+        profile: "readonly"
+      - name: backup_user
+        password_secret:
+          name: "clickhouse_users"
+          key: "backup-password"
+    resources:
+      # disk_volume_size: 1000Gi
+      # log_volume_size: 10Gi
+      max_concurrent_queries: 100
+      # shardCount: 1
+      # replicasCount: 1
+      requests:
+        memory: 8Gi
+        cpu: 4000m
+      limits:
+        memory: 16Gi
+        cpu: 8000m
+
+extraResources: []
