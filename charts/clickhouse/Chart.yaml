@@ -5,3 +5,9 @@ version: 0.0.1
 maintainers:
   - name: esnet
     email: "esnet-seg-ma@lbl.gov"
+dependencies:
+  - name: altinity-clickhouse-operator
+    version: "0.25.4"
+    repository: "https://helm.altinity.com"
+    alias: ch-operator
+    condition: ch-operator.enabled

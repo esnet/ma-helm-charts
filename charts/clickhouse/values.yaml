@@ -1,5 +1,10 @@
 namespace: clickhouse
 
+ch-operator:
+  enabled: false
+  commonAnnotations:
+    argocd.argoproj.io/sync-wave: "-15"
+
 config:
   tls_enabled: true
   tls_cert_secret: tls-cert

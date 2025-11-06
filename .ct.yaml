@@ -1,0 +1,12 @@
+# Chart directories to lint
+chart-dirs:
+  - charts
+
+# Helm repositories to add before linting
+chart-repos:
+  - altinity=https://helm.altinity.com
+  - bitnami=https://charts.bitnami.com/bitnami
+  # Add more repos as needed
+
+# Additional settings
+helm-extra-args: --timeout 600s
