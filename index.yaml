@@ -1,5 +1,25 @@
 apiVersion: v1
 entries:
+  clickhouse:
+  - apiVersion: v2
+    created: "2025-11-06T20:55:26.841583334Z"
+    dependencies:
+    - alias: ch-operator
+      condition: ch-operator.enabled
+      name: altinity-clickhouse-operator
+      repository: https://helm.altinity.com
+      version: 0.25.4
+    description: Clickhouse Cluster Configuration. This assumes a the affinity CH
+      operator (https://docs.altinity.com/clickhouse-operator/ ) has already been
+      installed.
+    digest: 082006528ac42b79a0aaf56c3cb6efb5c43686feb489c6f6d9874d8199307610
+    maintainers:
+    - email: esnet-seg-ma@lbl.gov
+      name: esnet
+    name: clickhouse
+    urls:
+    - clickhouse-0.0.1.tgz
+    version: 0.0.1
   load-balancer:
   - apiVersion: v2
     created: "2025-11-05T18:21:15.982182405Z"
@@ -12,4 +32,4 @@ entries:
     urls:
     - load-balancer-0.1.0.tgz
     version: 0.1.0
-generated: "2025-11-05T18:21:15.982193185Z"
+generated: "2025-11-06T20:55:26.965447358Z"
