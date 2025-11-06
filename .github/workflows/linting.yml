@@ -36,6 +36,9 @@ jobs:
       - name: Set up chart-testing
         uses: helm/chart-testing-action@v2.7.0
 
+      - name: Setup Helm repositories
+        run: ./.github/scripts/repo_setup.sh
+
       - name: Run chart-testing (list-changed)
         id: list-changed
         run: |
@@ -45,7 +48,7 @@ jobs:
           fi
 
       - name: Run chart-testing (lint)
-        run: ct lint --all --config .ct.yaml
+        run: ct lint --all
 
       # - name: Create kind cluster
       #   if: steps.list-changed.outputs.changed == 'true'
