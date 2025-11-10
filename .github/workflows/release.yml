@@ -1,5 +1,8 @@
 name: ReleaseHelmChart
 on:
+  pull_request:
+    branches:
+      - main
   push:
     branches:
       - main
@@ -13,6 +16,7 @@ jobs:
     permissions:
       contents: write
       pages: write
+      id-token: write # Required for Workload Identity Federation
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -24,20 +28,61 @@ jobs:
         run: |
           git config user.name "$GITHUB_ACTOR"
           git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
+
       - name: Install Helm
         uses: azure/setup-helm@v4
         with:
           version: v3.19.0
 
-      - name: Setup Helm repositories
-        run: ./.github/scripts/repo_setup.sh
-
-      - name: Run chart-releaser
-        uses: helm/chart-releaser-action@v1.7.0
+      - name: Authenticate to Google Cloud
+        id: auth
+        uses: google-github-actions/auth@v3
         with:
-          charts_dir: charts
-          skip_existing: true
-          pages_branch: gh-pages
-          packages_with_index: true
-        env:
-          CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+          workload_identity_provider: ${{ secrets.WIF_PROVIDER }}
+          service_account: ${{ secrets.WIF_SERVICE_ACCOUNT }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v3
+
+      - name: Authenticate Helm with gcloud
+        run: |
+          gcloud auth application-default print-access-token | helm registry login -u oauth2accesstoken --password-stdin https://${{ vars.ARTIFACT_REGISTRY_LOCATION }}-docker.pkg.dev
+
+      - name: Package and Push Helm Charts
+        run: |
+          ./.github/scripts/repo_setup.sh
+          for chart in charts/*; do
+            if [ -d "$chart" ]; then
+              chart_name=$(basename "$chart")
+              echo "Processing chart: $chart_name"
+
+              # Update dependencies if Chart.yaml has dependencies
+              if [ -f "$chart/Chart.yaml" ]; then
+                if grep -q "dependencies:" "$chart/Chart.yaml"; then
+                  echo "Updating dependencies for $chart_name"
+                  helm dependency update "$chart"
+                fi
+              fi
+
+              # Get the version from Chart.yaml
+              version=$(grep '^version:' "$chart/Chart.yaml" | awk '{print $2}')
+
+              # Add short commit SHA for pull requests
+              if [ "${{ github.event_name }}" = "pull_request" ]; then
+                short_sha=$(echo "${{ github.sha }}" | cut -c1-7)
+                version="${version}-dev-${short_sha}"
+                echo "Pull request detected, using version: $version"
+
+                # Update Chart.yaml with commit version
+                sed -i "s/^version:.*/version: $version/" "$chart/Chart.yaml"
+              fi
+
+              # Package the chart
+              helm package "$chart"
+
+              # Push to Artifact Registry
+              echo "Pushing ${chart_name}-${version}.tgz to Artifact Registry"
+              helm push "${chart_name}-${version}.tgz" oci://${{ vars.ARTIFACT_REGISTRY_LOCATION }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/${{ vars.ARTIFACT_REGISTRY_REPO }}
+
+            fi
+          done
