@@ -1,0 +1,9 @@
+EnvoyGateway: is only supported with GKE. Please make sure your IPv6 is both regional and using NetLB. You can create by following this example:
+
+```
+gcloud compute addresses create lb-ipv6 \
+  --ip-version=IPV6 \
+  --endpoint-type=NETLB \
+  --region=us-central1 \
+  --subnet=default-kube
+```
