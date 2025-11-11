@@ -1,7 +1,7 @@
 apiVersion: v2
 name: load-balancer
 description: Load Balancer and Configuration
-version: 0.1.0
+version: 0.1.2
 maintainers:
   - name: esnet
     email: "esnet-seg-ma@lbl.gov"

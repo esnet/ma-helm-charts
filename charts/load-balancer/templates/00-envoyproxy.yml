@@ -13,6 +13,9 @@ metadata:
     argocd.argoproj.io/sync-wave: "-15"
 {{- end }}
 spec:
+{{- if .Values.config.gateway.ipv6.enabled }}
+  ipFamily: DualStack
+{{- end }}
   provider:
     type: Kubernetes
     kubernetes:
@@ -20,15 +23,5 @@ spec:
         type: LoadBalancer
         annotations:
           networking.gke.io/load-balancer-type: "External"
-{{- if .Values.config.gateway.ipv6.enabled }}
-        loadBalancerIPs:
-          -  "{{ .Values.config.gateway.ipv4.address }}"
-          -  "{{ .Values.config.gateway.ipv6.address }}"
-        ipFamilyPolicy: PreferDualStack
-        ipFamilies:
-          - IPv4
-          - IPv6
-{{- else }}
-        loadBalancerIP: "{{ .Values.config.gateway.ipv4.address }}"
-{{- end }}
+          networking.gke.io/load-balancer-ip-addresses: "{{ .Values.config.gateway.ipv4.address }}{{- if .Values.config.gateway.ipv6.enabled }},{{ .Values.config.gateway.ipv6.address }}{{- end }}"
 {{- end }}

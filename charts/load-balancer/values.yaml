@@ -35,12 +35,12 @@ config:
     # gateway_namespace_override: envoy-gateway-system
     name: external-http
     namespace_policy: All
-    type: gke
-    class_name: gke-l7-global-external-managed
+    # type: gke
+    # class_name: gke-l7-global-external-managed
     ## envoy
     proxy_name: external-http-proxy
-    # type: envoy
-    # class_name: envoy
+    type: envoy
+    class_name: envoy
     ipv4:
       enabled: true
       address: 8.2.2.2

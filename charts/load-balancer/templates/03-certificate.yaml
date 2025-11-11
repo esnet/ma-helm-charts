@@ -6,9 +6,6 @@ metadata:
   annotations:
     cert-manager.io/issue-temporary-certificate: "true"
     acme.cert-manager.io/http01-edit-in-place: "true"
-{{- if .Values.config.argocd_annotation }}
-    argocd.argoproj.io/sync-wave: "-10"
-{{- end }}
 spec:
   secretName: {{ .Values.config.certificate.name }}
   issuerRef:
