@@ -6,6 +6,8 @@ ch-operator:
     argocd.argoproj.io/sync-wave: "-15"
 
 config:
+  tls_routes:
+    enabled: true
   tls_enabled: true
   tls_cert_secret: tls-cert
   clickhouse_version: 25.9
