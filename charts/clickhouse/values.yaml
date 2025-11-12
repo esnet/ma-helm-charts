@@ -1,15 +1,15 @@
 namespace: clickhouse
 
-ch-operator:
-  enabled: false
-  commonAnnotations:
-    argocd.argoproj.io/sync-wave: "-15"
+# ch-operator:
+# enabled: false
+# commonAnnotations:
+# argocd.argoproj.io/sync-wave: "-15"
 
 config:
-  tls_routes:
+  tls:
     enabled: true
-  tls_enabled: true
-  tls_cert_secret: tls-cert
+    routes: true
+    cert_name: tls-cert2
   clickhouse_version: 25.9
   domains:
     - localhost.nip.io
@@ -43,6 +43,7 @@ config:
           </clickhouse>
 
     users:
+      ## see https://github.com/Altinity/clickhouse-operator/blob/master/docs/chi-examples/05-settings-01-overview.yaml for more detailed examples
       # New User example
       # - name: myUsers
       #   password_secret:
@@ -57,7 +58,7 @@ config:
         password_secret:
           name: "clickhouse_users"
           key: "admin-password"
-        access_management: "1"
+        access_management: 1
       - name: readonly_user
         password_secret:
           name: "clickhouse_users"
@@ -67,6 +68,10 @@ config:
         password_secret:
           name: "clickhouse_users"
           key: "backup-password"
+        databases:
+          - moo
+          - foo
+          - bar
     resources:
       # disk_volume_size: 1000Gi
       # log_volume_size: 10Gi

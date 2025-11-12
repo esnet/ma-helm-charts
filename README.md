@@ -11,21 +11,28 @@ helm dependency update
 
 Once you commit someting into main a Github Action will releas all artifacts and update the index page at: https://software.es.net/ma-helm-charts/index.yaml
 
-## Adding Helm Repo
 
-```sh
-helm repo add ma-helm https://software.es.net/ma-helm-charts/
-helm repo update ma-helm
-```
+## Note
 
-You can then list the charts via:
+All chars here are public and being pushed to a public registry.
 
-```sh
-helm search repo ma-helm
-NAME                 	CHART VERSION	APP VERSION	DESCRIPTION
-ma-helm/clickhouse   	0.1.3        	           	Clickhouse Cluster Configuration. This assumes ...
-ma-helm/load-balancer	0.1.1        	           	Load Balancer and Configuration
-```
+## Using the repo
+
+All artifacts are currently published to our OCI registry:
+
+gcloud artifacts packages list \
+  --repository=inf-helm \
+  --location=us-central1 \
+  --project=ma-infrastructure-474617
+
+### Show chart
+
+helm show chart oci://us-central1-docker.pkg.dev/ma-infrastructure-474617/inf-helm/load-balancer
+
+## Install chart
+
+helm install my-release oci://us-central1-docker.pkg.dev/ma-infrastructure-474617/inf-helm/load-balancer --version 0.1.2
+
 
 ## Testing
 brew install chart-testing
@@ -40,24 +47,12 @@ helm plugin install https://github.com/helm-unittest/helm-unittest
 ct lint charts ## validates said charts, is also invoked by CICD
 
 
-### Helm OCI push
+### CICD
 
-This is mostly for testing purposes for now but we should really be moving to using OCI eventually.
+Every MR will push create a temporary tag you can use for testing:
 
-1. Get a machine token
-
-gcloud auth print-access-token | helm registry login -u oauth2accesstoken \
-  --password-stdin https://us-central1-docker.pkg.dev
-
-2. Build
+example:
 
 ```sh
-helm package load-balancer
-helm push load-balancer-0.1.1.tgz oci://us-central1-docker.pkg.dev/ma-infrastructure-474617/inf-helm
-helm pull oci://us-central1-docker.pkg.dev/ma-infrastructure-474617/inf-helm/load-balancer --version 0.1.1
-## Installing from oci
-helm install my-release oci://us-central1-docker.pkg.dev/ma-infrastructure-474617/inf-helm/load-balancer --version 0.1.1
-## Show chart
-helm show chart oci://us-central1-docker.pkg.dev/ma-infrastructure-474617/inf-helm/load-balancer --version 0.1.1
-
+helm pull helm pull oci://us-central1-docker.pkg.dev/ma-infrastructure-474617/inf-helm/clickhouse --version 0.0.3-dev-f6b6158
 ```

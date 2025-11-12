@@ -9,7 +9,7 @@ config:
     issuer: letsencrypt-prod
     issuer_server: https://acme-v02.api.letsencrypt.org/directory
     ## If staging use:
-    # server: https://acme-staging-v02.api.letsencrypt.org/directory
+    # issuer_server: https://acme-staging-v02.api.letsencrypt.org/directory
     # issuer: letsencrypt-staging (does not need to be update but helpful to avoid confusion)
     tlsPolicy:
       enabled: true

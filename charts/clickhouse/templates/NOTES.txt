@@ -1,9 +1,5 @@
-{{- if index .Values "ch-operator" "enabled" }}
-✓ ClickHouse Operator has been installed
-{{- else }}
-⚠ ClickHouse Operator installation was skipped (assuming it's already installed). Please make sure to install it from https://helm.altinity.com
-{{- end }}
+⚠ ClickHouse Operator was not installed. Please make sure to install it from https://helm.altinity.com
 
-⚠ Please not, tha ch-operator needs to be installed first. Helm chart does not have a mechanism to manage order of operations currently. The operator by defauls uses sync wave for argocd, but if you are not using argocd, we suggest you install the operator seperately and use this chart to simply configure your cluster.
+⚠ Please not, that altinity opertor needs to be installed first.
 
 ClickHouse cluster "{{ .Release.Name }}" has been deployed!

@@ -1,4 +1,4 @@
-{{- if .Values.config.tls_routes.enabled }}
+{{- if .Values.config.tls.routes }}
 # TLSRoute for native ClickHouse protocol (port 9440 - Passthrough)
 apiVersion: gateway.networking.k8s.io/v1alpha2
 kind: TLSRoute
