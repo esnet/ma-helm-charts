@@ -27,22 +27,26 @@ spec:
 {{- if .Values.config.ch.users }}
     # User configuration
     users:
-      {{- range .Values.config.ch.users }}
-      ## {{ .name }} user config
+{{- range .Values.config.ch.users }}
       {{ .name }}/password:
         valueFrom:
           secretKeyRef:
             name: {{ .password_secret.name }}
             key: {{ .password_secret.key }}
-      {{ .name }}/networks/ip: {{ .allowed_ips | default "::/0"  | quote }}
+      {{ .name }}/networks/ip: {{ .allowed_ips | default "::/0" | quote }}
       {{ .name }}/profile: {{ .profile | default "default" | quote }}
       {{ .name }}/quota: {{ .quota | default "default" | quote }}
-      {{- if .access_management }}
-      {{ .name }}/access_management: {{ .access_management | quote }}
-
-      {{- end }}
-      {{- end }}
-      {{- end }}
+{{- if .access_management }}
+      {{ .name }}/access_management: {{ .access_management }}
+{{- end }}
+{{- if .databases }}
+      {{ .name }}/allow_databases/database:
+{{- range .databases }}
+        - {{ . | quote }}
+{{- end }}
+{{- end }}
+{{- end }}
+{{- end }}
 
     # Profiles
     profiles:
@@ -69,7 +73,7 @@ spec:
       logger/console: "true"
       # Allow backups
       allow_experimental_database_replicated: "1"
-{{- if .Values.config.tls_enabled }}
+{{- if .Values.config.tls.enabled }}
       # TLS/SSL Settings
       openSSL/server/certificateFile: /etc/clickhouse-server/certs/tls.crt
       openSSL/server/privateKeyFile: /etc/clickhouse-server/certs/tls.key
@@ -87,7 +91,7 @@ spec:
       {{- end }}
       {{- end }}
 
-{{- if .Values.config.tls_enabled }}
+{{- if .Values.config.tls.enabled }}
       # TLS configuration
       config.d/ssl.xml: |
         <clickhouse>
@@ -137,7 +141,7 @@ spec:
                 limits:
                   memory: "{{ .Values.config.ch.resources.limits.memory }}"
                   cpu:  "{{ .Values.config.ch.resources.limits.cpu}}"
-{{- if .Values.config.tls_enabled }}
+{{- if .Values.config.tls.enabled }}
               volumeMounts:
                 - name: tls-certs
                   mountPath: /etc/clickhouse-server/certs
@@ -145,7 +149,7 @@ spec:
           volumes:
             - name: tls-certs
               secret:
-                secretName: {{ .Values.config.tls_cert_secret }}
+                secretName: {{ .Values.config.tls.cert_name }}
 {{- end }}
 
     volumeClaimTemplates:
