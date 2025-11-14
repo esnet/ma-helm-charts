@@ -3,12 +3,12 @@
 apiVersion: "clickhouse-keeper.altinity.com/v1"
 kind: "ClickHouseKeeperInstallation"
 metadata:
-  name: {{ .Values.config.chk.name }} 
+  name: {{ .Values.config.chk.name }}
   namespace: {{ .Values.namespace }}
 spec:
   configuration:
     clusters:
-      - name: {{ .Values.config.chk.name }} 
+      - name: {{ .Values.config.chk.name }}
         layout:
           replicasCount: {{ .Values.config.chk.resources.replicasCount | default 3 }}
     settings:
@@ -17,13 +17,14 @@ spec:
       listen_host: "0.0.0.0"
       keeper_server/four_letter_word_white_list: "*"
       keeper_server/coordination_settings/raft_logs_level: "information"
+{{- if .Values.config.chk.monitoring.enabled }}
       prometheus/endpoint: "/metrics"
       prometheus/port: "7000"
       prometheus/metrics: "true"
       prometheus/events: "true"
       prometheus/asynchronous_metrics: "true"
       prometheus/status_info: "false"
-
+{{- end }}
   defaults:
     templates:
       podTemplate: default
@@ -32,6 +33,12 @@ spec:
   templates:
     podTemplates:
       - name: default
+{{- if .Values.config.chk.monitoring.enabled }}
+        metadata:
+          annotations:
+            prometheus.io/port: "7000"
+            prometheus.io/scrape: "true"
+{{- end }}
         spec:
           affinity:
             podAntiAffinity:
@@ -65,4 +72,3 @@ spec:
           resources:
             requests:
               storage: {{ .Values.config.chk.resources.disk_volume_size |default "10Gi" }}
-

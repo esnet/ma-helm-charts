@@ -1,0 +1,35 @@
+{{- if .Values.config.chk.monitoring.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: keeper-metrics
+  namespace: {{ .Values.namespace }}
+  labels:
+    clickhouse-keeper.altinity.com/chk: {{ .Values.config.chk.name }}
+spec:
+  clusterIP: None
+  selector:
+    clickhouse-keeper.altinity.com/chk: {{ .Values.config.chk.name }}
+  ports:
+    - name: metrics
+      port: 7000
+      targetPort: 7000
+{{- end }}
+---
+{{- if .Values.config.ch.monitoring.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: ch-metrics
+  namespace: {{ .Values.namespace }}
+  labels:
+    clickhouse.altinity.com/cluster: {{ .Values.config.ch.name }}
+spec:
+  clusterIP: None
+  selector:
+    clickhouse.altinity.com/cluster: {{ .Values.config.ch.name }}
+  ports:
+    - name: metrics
+      port: 8888
+      targetPort: 8888
+{{- end }}
