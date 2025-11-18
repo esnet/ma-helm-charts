@@ -104,8 +104,9 @@ spec:
           <tcp_port_secure>9440</tcp_port_secure>
         </clickhouse>
 {{- end }}
-
   defaults:
+    storageManagement:
+      reclaimPolicy: {{ .Values.config.chk.storage_policy | default "Retain"}}
     templates:
       podTemplate: clickhouse-pod-template
       dataVolumeClaimTemplate: data-volume
@@ -146,13 +147,77 @@ spec:
             prometheus.io/scrape: 'true'
             prometheus.io/port: '8888'
             prometheus.io/path: '/metrics'
+{{- if .Values.config.backups.enabled }}
             # need separate prometheus scrape config, look to https://github.com/prometheus/prometheus/issues/3756
             clickhouse.backup/scrape: 'true'
             clickhouse.backup/port: '7171'
             clickhouse.backup/path: '/metrics'
 {{- end }}
+{{- end }}
         spec:
+{{- if .Values.config.backups.enabled }}
+{{- if and (ne (.Values.config.backups.service_name | default "") "") (ne (.Values.config.backups.service_file.secret_name | default "") "") }}
+{{- fail "clickhouse.backup is not configured correctly. You cannot define both service_name AND service_file.name." }}
+{{- end}}
+{{- if ne (.Values.config.backups.service_name | default "") "" }}
+          serviceAccountName: {{ .Values.config.backups.service_name }}
+{{- end }}
+{{- end }}
           containers:
+{{- if .Values.config.backups.enabled }}
+            - name: clickhouse-backup
+              image: altinity/clickhouse-backup:{{ .Values.config.backups.version }}
+              imagePullPolicy: Always
+              args:
+                - "server"
+                - "--watch"
+                - "--watch-interval={{ .Values.config.backups.backup_interval | default "24h" }}"
+                - "--full-interval={{ .Values.config.backups.full_interval | default "168h" }}"
+              env:
+                - name: LOG_LEVEL
+                  value: "info"
+                - name: ALLOW_EMPTY_BACKUPS
+                  value: "true"
+                - name: API_LISTEN
+                  value: "0.0.0.0:7171"
+                # INSERT INTO system.backup_actions to execute backup
+                - name: API_CREATE_INTEGRATION_TABLES
+                  value: "true"
+                - name: BACKUPS_TO_KEEP_REMOTE
+                  value: "{{ .Values.config.backups.retention_policy | default 7 }}"
+                - name: REMOTE_STORAGE
+                  value: "{{ .Values.config.backups.storage }}"
+                - name: CLICKHOUSE_HOST
+                  value: "{{ .Values.config.backups.clickhouse_host | default "localhost" }}"
+                - name: CLICKHOUSE_PORT
+                  value: "{{ .Values.config.backups.clickhouse_port | default "9000" }}"
+                - name: CLICKHOUSE_USERNAME
+                  value: "{{ .Values.config.backups.backups_user.name | default "admin" }}"
+                - name: CLICKHOUSE_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ .Values.config.backups.backups_user.secret.name }}
+                      key: {{ .Values.config.backups.backups_user.secret.key }}
+{{- if eq .Values.config.backups.storage "gcs"}}
+                - name: GCS_BUCKET
+                  value: "{{ .Values.config.backups.bucket }}"
+                - name: GCS_PATH
+                  value: "{{ .Values.config.backups.backup_path }}"
+  {{- if ne (.Values.config.backups.service_file.secret_name | default "") "" }}
+                - name: {{ .Values.config.backups.service_file.env_name | default "GCS_CREDENTIALS_JSON" }}
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ .Values.config.backups.service_file.secret_name }}
+                      key: {{ .Values.config.backups.service_file.secret_key }}
+  {{- end }}
+{{- else }}
+{{- fail "clickhouse.backup.storage only supports GCS " }}
+{{- end }}
+              ports:
+                - name: backup-rest
+                  containerPort: 7171
+{{- end }}
+
             - name: clickhouse
               image: clickhouse/clickhouse-server:{{ .Values.config.clickhouse_version }}
               resources:
