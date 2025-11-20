@@ -3,20 +3,18 @@
 apiVersion: "clickhouse.altinity.com/v1"
 kind: "ClickHouseInstallation"
 metadata:
-  name: ch-cluster
+  name: {{ .Values.config.ch.name }}
   namespace: {{ .Values.namespace }}
 spec:
   configuration:
     zookeeper:
       nodes:
-        - host: chk-keeper-cluster-{{ .Values.config.chk.name }}-0-0.{{ .Values.namespace }}.svc.cluster.local
+{{- range $i := until (.Values.config.chk.resources.replicasCount | int) }}
+        - host: chk-keeper-cluster-{{ $.Values.config.chk.name }}-0-{{ $i }}.{{ $.Values.namespace }}.svc.cluster.local
           port: 2181
-        - host: chk-keeper-cluster-{{ .Values.config.chk.name }}-0-1.{{ .Values.namespace }}.svc.cluster.local
-          port: 2181
-        - host: chk-keeper-cluster-{{ .Values.config.chk.name }}-0-2.{{ .Values.namespace }}.svc.cluster.local
-          port: 2181
+{{- end }}
     clusters:
-      - name: ch-cluster
+      - name: {{ .Values.config.ch.name }}
         layout:
           shardsCount: {{ .Values.config.ch.resources.shardCount | default 1 }}
           replicasCount: {{ .Values.config.ch.resources.replicasCount | default 1 }}
@@ -64,6 +62,13 @@ spec:
       {{- end }}
 
     settings:
+{{- if .Values.config.ch.monitoring.enabled }}
+      prometheus/endpoint: /metrics
+      prometheus/port: 8888
+      prometheus/metrics: true
+      prometheus/events: true
+      prometheus/asynchronous_metrics: true
+{{- end }}
       # Performance settings
       max_concurrent_queries: {{ .Values.config.ch.resources.max_concurrent_queries }}
       # Compression
@@ -112,6 +117,11 @@ spec:
         generateName: "clickhouse-{chi}"
         spec:
           ports:
+{{- if .Values.config.ch.monitoring.enabled }}
+            - name: http-monitor
+              port: 8888
+              targetPort: 8888
+{{- end }}
             - name: http
               port: 8123
               targetPort: 8123
@@ -130,6 +140,17 @@ spec:
           type: ClusterIP
     podTemplates:
       - name: clickhouse-pod-template
+{{- if .Values.config.ch.monitoring.enabled }}
+        metadata:
+          annotations:
+            prometheus.io/scrape: 'true'
+            prometheus.io/port: '8888'
+            prometheus.io/path: '/metrics'
+            # need separate prometheus scrape config, look to https://github.com/prometheus/prometheus/issues/3756
+            clickhouse.backup/scrape: 'true'
+            clickhouse.backup/port: '7171'
+            clickhouse.backup/path: '/metrics'
+{{- end }}
         spec:
           containers:
             - name: clickhouse

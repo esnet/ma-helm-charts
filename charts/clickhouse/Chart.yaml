@@ -5,3 +5,4 @@ version: 0.0.3
 maintainers:
   - name: esnet
     email: "esnet-seg-ma@lbl.gov"
+## This Chart may also be helpful: https://github.com/Altinity/helm-charts/tree/main/charts/clickhouse
