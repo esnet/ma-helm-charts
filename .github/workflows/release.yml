@@ -81,8 +81,14 @@ jobs:
               helm package "$chart"
 
               # Push to Artifact Registry
-              echo "Pushing ${chart_name}-${version}.tgz to Artifact Registry"
-              helm push "${chart_name}-${version}.tgz" oci://${{ vars.ARTIFACT_REGISTRY_LOCATION }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/${{ vars.ARTIFACT_REGISTRY_REPO }}
+              existing=$(helm show chart oci://${{ vars.ARTIFACT_REGISTRY_LOCATION }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/${{ vars.ARTIFACT_REGISTRY_REPO }}/${chart_name} --version ${version} 2>/dev/null || true)
+              if [ -n "$existing" ]; then
+                echo "Version $version of $chart_name already exists, skipping push."
+              else
+                echo "Pushing ${chart_name}-${version}.tgz to Artifact Registry"
+                helm push "${chart_name}-${version}.tgz" oci://${{ vars.ARTIFACT_REGISTRY_LOCATION }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/${{ vars.ARTIFACT_REGISTRY_REPO }}
+              fi
+              #helm push "${chart_name}-${version}.tgz" oci://${{ vars.ARTIFACT_REGISTRY_LOCATION }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/${{ vars.ARTIFACT_REGISTRY_REPO }}
 
             fi
           done
