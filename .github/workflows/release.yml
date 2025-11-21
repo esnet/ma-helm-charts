@@ -88,7 +88,5 @@ jobs:
                 echo "Pushing ${chart_name}-${version}.tgz to Artifact Registry"
                 helm push "${chart_name}-${version}.tgz" oci://${{ vars.ARTIFACT_REGISTRY_LOCATION }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/${{ vars.ARTIFACT_REGISTRY_REPO }}
               fi
-              #helm push "${chart_name}-${version}.tgz" oci://${{ vars.ARTIFACT_REGISTRY_LOCATION }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/${{ vars.ARTIFACT_REGISTRY_REPO }}
-
             fi
           done

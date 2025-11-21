@@ -9,7 +9,37 @@ config:
   domains:
     - localhost.nip.io
 
+  backups:
+    enabled: false
+    version: 2.6.39
+    # service_name: clickhouse-backup-gsa@stardust-development-464714.iam.gserviceaccount.com
+    empty_backups: true
+    create_integration_tables: true
+    # retention_policy: 7
+    backup_interval: 24h
+    full_interval: 168h
+    storage: gcs
+    bucket: clickhouse-stardust-staging
+    backup_path: backup/shard-{shard}
+    ## these should point to localhost:9000 but if need be they are exposed as configurable
+    # clickhouse_host: localhost.nip.io
+    # clickhouse_port: 90001
+    backups_user:
+      name: admin
+      secret:
+        name: "clickhouse-users"
+        key: "admin_password"
+
+    ## Note: You should Either use a service name OR service_file, not both.
+    service_name: clickhouse-backup-sa
+    service_file: {}
+    #   env_name: GCS_CREDENTIALS_JSON # Or GCS_CREDENTIALS_JSON_ENCODED
+    #   secret_name: "secret_name"
+    #   secret_key: "secert_property"
+
   chk:
+    ## Delete will mean data loss on PVC size change
+    storage_policy: Retain
     monitoring:
       enabled: true
     name: "keeper-cluster"
@@ -23,6 +53,8 @@ config:
         memory: 4Gi
         cpu: 2
   ch:
+    ## Delete will mean data loss on PVC size change
+    storage_policy: Retain
     name: ch-cluster
     monitoring:
       enabled: true
@@ -57,17 +89,17 @@ config:
       - name: admin
         password_secret:
           name: "clickhouse_users"
-          key: "admin-password"
+          key: "admin_password"
         access_management: 1
       - name: readonly_user
         password_secret:
           name: "clickhouse_users"
-          key: "readonly-password"
+          key: "readonly_password"
         profile: "readonly"
       - name: backup_user
         password_secret:
           name: "clickhouse_users"
-          key: "backup-password"
+          key: "backup_password"
         databases:
           - moo
           - foo

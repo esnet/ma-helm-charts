@@ -26,6 +26,8 @@ spec:
       prometheus/status_info: "false"
 {{- end }}
   defaults:
+    storageManagement:
+      reclaimPolicy: {{ .Values.config.chk.storage_policy | default "Retain"}}
     templates:
       podTemplate: default
       dataVolumeClaimTemplate: default
