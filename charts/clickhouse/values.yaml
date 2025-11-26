@@ -10,6 +10,8 @@ config:
     - localhost.nip.io
 
   backups:
+    monitoring:
+      enabled: true
     enabled: false
     version: 2.6.39
     # service_name: clickhouse-backup-gsa@stardust-development-464714.iam.gserviceaccount.com
