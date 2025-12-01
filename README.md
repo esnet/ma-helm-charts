@@ -20,22 +20,31 @@ All chars here are public and being pushed to a public registry.
 
 All artifacts are currently published to our OCI registry:
 
+```sh
 gcloud artifacts packages list \
   --repository=inf-helm \
   --location=us-central1 \
   --project=ma-infrastructure-474617
+```
 
 ### Show chart
 
+```sh
 helm show chart oci://us-central1-docker.pkg.dev/ma-infrastructure-474617/inf-helm/load-balancer
+```
 
 ## Install chart
 
+```sh
 helm install my-release oci://us-central1-docker.pkg.dev/ma-infrastructure-474617/inf-helm/load-balancer --version 0.1.2
-
+```
 
 ## Testing
+
+```sh
 brew install chart-testing
+```
+
 
 ct install --all
 ```sh
@@ -44,8 +53,9 @@ helm plugin install https://github.com/helm-unittest/helm-unittest
 
 ### Linting
 
+```sh
 ct lint charts ## validates said charts, is also invoked by CICD
-
+```
 
 ### CICD
 
@@ -55,4 +65,6 @@ example:
 
 ```sh
 helm pull helm pull oci://us-central1-docker.pkg.dev/ma-infrastructure-474617/inf-helm/clickhouse --version 0.0.3-dev-f6b6158
+## Or to install 
+helm install foobar  oci://us-central1-docker.pkg.dev/ma-infrastructure-474617/inf-helm/clickhouse --version 0.0.3-dev-f6b6158 (--set namePrefix=foobar optional) --create-namespace
 ```
