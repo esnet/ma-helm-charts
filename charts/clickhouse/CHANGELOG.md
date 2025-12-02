@@ -2,12 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+[Unreleased/0.0.6]
 
-[Unreleased/0.0.5]
+[0.0.5]
 
 - added backups.monitoring.enabled that exposes a new service that can be hooked into otel/prom scraping
 - Fixing CI to prevent duplicate tags or overriding tags.
 - Added support for monitoring backup service
+- Added node affinity support enabling the user to pin deploment to a given node pool. Fixed podAntiAffinity for keeper nodes.
 
 [0.0.4]
  - Enable a backups pattern, supporting GCS via service or workload identity.

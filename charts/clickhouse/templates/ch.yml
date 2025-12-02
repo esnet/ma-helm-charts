@@ -155,6 +155,31 @@ spec:
 {{- end }}
 {{- end }}
         spec:
+{{- if or (eq .Values.config.ch.affinity.enabled true) .Values.config.ch.affinity.podAntiAffinity }}
+          affinity:
+{{- if .Values.config.ch.affinity.enabled | default false }}
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                - matchExpressions:
+                  - key: {{ .Values.config.ch.affinity.label_name | default "cloud.google.com/gke-nodepool"  }}
+                    operator: In
+                    values:
+                    - {{ .Values.config.ch.affinity.node_pool | default "clickhouse-pool"}}
+{{- end}}
+{{- if .Values.config.ch.affinity.podAntiAffinity | default false }}
+            podAntiAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                - labelSelector:
+                    matchExpressions:
+                      - key: "clickhouse.altinity.com/chi"
+                        operator: In
+                        values:
+                          - {{ .Values.config.ch.name }}
+                  topologyKey: "kubernetes.io/hostname"
+{{- end}}
+
+{{- end}}
 {{- if .Values.config.backups.enabled }}
 {{- if and (ne (.Values.config.backups.service_name | default "") "") (ne (.Values.config.backups.service_file.secret_name | default "") "") }}
 {{- fail "clickhouse.backup is not configured correctly. You cannot define both service_name AND service_file.name." }}

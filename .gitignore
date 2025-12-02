@@ -5,3 +5,4 @@ charts/*.tgz
 !Chart.lock
 charts/*/charts/
 charts/.python-version
+.DS_Store
