@@ -3,18 +3,25 @@ namespace: clickhouse
 config:
   tls:
     enabled: true
+    ## When enabled will generate a httproute
     routes: true
+    ## Use in configuring clickhouse TLS connectivity
     cert_name: tls-cert2
+  ## Clickhouse image tag to use
   clickhouse_version: 25.9
+  ## Used when configuring a tlsroute, feel free to ignore if you're not using the feature
   domains:
     - localhost.nip.io
 
+  ## Optionally enable a pod to enable backups
   backups:
+    ## Exposes a service with monitoring date for Otle use
+    monitoring:
+      enabled: true
     enabled: false
+    ## image version
     version: 2.6.39
     # service_name: clickhouse-backup-gsa@stardust-development-464714.iam.gserviceaccount.com
-    empty_backups: true
-    create_integration_tables: true
     # retention_policy: 7
     backup_interval: 24h
     full_interval: 168h
@@ -38,6 +45,14 @@ config:
     #   secret_key: "secert_property"
 
   chk:
+    affinity:
+      ## When enabled, podAntiAffinity ensures that each keeper pod is running on a different node.
+      podAntiAffinity: false
+      ## affinity allow you to pin the deployment to a given node pool
+      enabled: false
+      label_name: cloud.google.com/gke-nodepool
+      node_pool: low-resource-pool
+
     ## Delete will mean data loss on PVC size change
     storage_policy: Retain
     monitoring:
@@ -53,6 +68,14 @@ config:
         memory: 4Gi
         cpu: 2
   ch:
+    affinity:
+      ## When enabled, podAntiAffinity ensures that each data pod is running on a different node.
+      podAntiAffinity: false
+      ## affinity allow you to pin the clickhouse data deployment to a given node pool
+      enabled: false
+      label_name: cloud.google.com/gke-nodepool
+      node_pool: clickhouse-data-pool
+
     ## Delete will mean data loss on PVC size change
     storage_policy: Retain
     name: ch-cluster

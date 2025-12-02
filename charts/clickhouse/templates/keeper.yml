@@ -42,16 +42,31 @@ spec:
             prometheus.io/scrape: "true"
 {{- end }}
         spec:
+
+{{- if or (eq .Values.config.chk.affinity.enabled true) .Values.config.chk.affinity.podAntiAffinity }}
           affinity:
+{{- if .Values.config.chk.affinity.enabled | default false }}
+            nodeAffinity:
+              requiredDuringSchedulingIgnoredDuringExecution:
+                nodeSelectorTerms:
+                - matchExpressions:
+                  - key: {{ .Values.config.chk.affinity.label_name | default "cloud.google.com/gke-nodepool"  }}
+                    operator: In
+                    values:
+                    - {{ .Values.config.chk.affinity.node_pool | default "low-resource-pool"}}
+{{- end}}
+{{- if .Values.config.chk.affinity.podAntiAffinity | default false }}
             podAntiAffinity:
               requiredDuringSchedulingIgnoredDuringExecution:
                 - labelSelector:
                     matchExpressions:
-                      - key: "app"
+                      - key: "clickhouse-keeper.altinity.com/chk"
                         operator: In
                         values:
-                          - clickhouse-keeper
+                          - {{ .Values.config.chk.name }}
                   topologyKey: "kubernetes.io/hostname"
+{{- end}}
+{{- end}}
           containers:
             - name: clickhouse-keeper
               imagePullPolicy: IfNotPresent

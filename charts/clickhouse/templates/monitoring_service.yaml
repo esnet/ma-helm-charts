@@ -33,3 +33,21 @@ spec:
       port: 8888
       targetPort: 8888
 {{- end }}
+---
+{{- if .Values.config.backups.monitoring.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: ch-backups-metrics
+  namespace: {{ .Values.namespace }}
+  labels:
+    clickhouse.altinity.com/cluster: {{ .Values.config.ch.name }}
+spec:
+  clusterIP: None
+  selector:
+    clickhouse.altinity.com/cluster: {{ .Values.config.ch.name }}
+  ports:
+    - name: metrics
+      port: 7171
+      targetPort: 7171
+{{- end }}
