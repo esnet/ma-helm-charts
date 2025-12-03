@@ -59,7 +59,9 @@ config:
       enabled: true
     name: "keeper-cluster"
     resources:
-      disk_volume_size: 20Gi
+      disk_volume:
+        size: 20Gi
+        # storageClass: premium-rwo
       replicasCount: 3
       requests:
         memory: 256M
@@ -128,6 +130,12 @@ config:
           - foo
           - bar
     resources:
+      disk_volume:
+        size: 1000Gi
+        # storageClass: premium-rwo
+      log_volume:
+        size: 10Gi
+        # storageClass: standard-rwo
       # disk_volume_size: 1000Gi
       # log_volume_size: 10Gi
       max_concurrent_queries: 100

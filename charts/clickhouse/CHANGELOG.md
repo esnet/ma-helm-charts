@@ -3,6 +3,7 @@
 All notable changes to this project will be documented in this file.
 
 [Unreleased/0.0.6]
+ - Added support for setting stoageclass. Breaking change for disk volume configuration.
 
 [0.0.5]
 

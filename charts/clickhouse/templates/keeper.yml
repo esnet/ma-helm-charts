@@ -84,8 +84,11 @@ spec:
     volumeClaimTemplates:
       - name: default
         spec:
+{{- if and .Values.config.chk.resources.disk_volume.storageClass (ne .Values.config.chk.resources.disk_volume.storageClass "") }}
+          storageClassName: {{ .Values.config.chk.resources.disk_volume.storageClass  }}
+{{- end }}
           accessModes:
             - ReadWriteOnce
           resources:
             requests:
-              storage: {{ .Values.config.chk.resources.disk_volume_size |default "10Gi" }}
+              storage: {{ .Values.config.chk.resources.disk_volume.size |default "10Gi" }}

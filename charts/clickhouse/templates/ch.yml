@@ -266,15 +266,21 @@ spec:
     volumeClaimTemplates:
       - name: data-volume
         spec:
+{{- if and .Values.config.ch.resources.disk_volume.storageClass (ne .Values.config.ch.resources.disk_volume.storageClass "") }}
+          storageClassName: {{ .Values.config.ch.resources.disk_volume.storageClass  }}
+{{- end }}
           accessModes:
             - ReadWriteOnce
           resources:
             requests:
-              storage: {{ .Values.config.ch.resources.disk_volume_size |default "1000Gi" }}
+              storage: {{ .Values.config.ch.resources.disk_volume.size |default "1000Gi" }}
       - name: log-volume
         spec:
+{{- if and .Values.config.ch.resources.log_volume.storageClass (ne .Values.config.ch.resources.log_volume.storageClass "") }}
+          storageClassName: {{ .Values.config.ch.resources.log_volume.storageClass  }}
+{{- end }}
           accessModes:
             - ReadWriteOnce
           resources:
             requests:
-              storage: {{ .Values.config.ch.resources.log_volume_size |default "10Gi" }}
+              storage: {{ .Values.config.ch.resources.log_volume.size |default "10Gi" }}
