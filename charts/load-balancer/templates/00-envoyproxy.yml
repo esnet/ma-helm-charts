@@ -3,18 +3,22 @@ apiVersion: gateway.envoyproxy.io/v1alpha1
 kind: EnvoyProxy
 metadata:
   name: {{ .Values.config.gateway.proxy_name }}
-{{- if .Values.config.gateway.gateway_namespace_override }}
-  namespace: {{ .Values.config.gateway.gateway_namespace_override }}
-{{- else }}
-  namespace: {{ .Values.config.namespace }}
-{{- end }}
+  namespace: {{ .Values.config.gateway.envoy_system_namespace }}
 {{- if .Values.config.argocd_annotation }}
   annotations:
     argocd.argoproj.io/sync-wave: "-15"
 {{- end }}
 spec:
-{{- if .Values.config.gateway.ipv6.enabled }}
+  # ipFamily must always be set explicitly. Without it, Envoy Gateway may
+  # inherit the cluster default (DualStack on dual-stack GKE clusters) even
+  # when only IPv4 is desired, causing the LoadBalancer Service to request
+  # an IPv6 address that was never provisioned.
+{{- if and .Values.config.gateway.ipv4.enabled .Values.config.gateway.ipv6.enabled }}
   ipFamily: DualStack
+{{- else if .Values.config.gateway.ipv6.enabled }}
+  ipFamily: IPv6
+{{- else }}
+  ipFamily: IPv4
 {{- end }}
   provider:
     type: Kubernetes
