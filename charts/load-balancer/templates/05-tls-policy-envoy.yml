@@ -3,11 +3,7 @@ apiVersion: gateway.envoyproxy.io/v1alpha1
 kind: ClientTrafficPolicy
 metadata:
   name: {{ .Values.config.gateway.name }}-tls-policy
-{{- if .Values.config.gateway.gateway_namespace_override }}
-  namespace: {{ .Values.config.gateway.gateway_namespace_override }}
-{{- else }}
   namespace: {{ .Values.config.namespace }}
-{{- end }}
 spec:
   targetRef:
     group: gateway.networking.k8s.io

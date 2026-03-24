@@ -6,6 +6,12 @@ metadata:
   annotations:
     cert-manager.io/issue-temporary-certificate: "true"
     acme.cert-manager.io/http01-edit-in-place: "true"
+{{- if .Values.config.argocd_annotation }}
+    # Deploy after the Gateway (wave -10) so the HTTP01 ACME challenge can
+    # be served through the live Gateway.  The GKE bootstrap PreSync hook
+    # ensures the TLS Secret exists before the Gateway is provisioned.
+    argocd.argoproj.io/sync-wave: "0"
+{{- end }}
 spec:
   secretName: {{ .Values.config.certificate.name }}
   issuerRef:

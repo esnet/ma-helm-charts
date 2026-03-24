@@ -16,27 +16,29 @@ config:
       name: gke-gateway-ssl-policy
       minVersion: "1.2"
       ciphers:
-        - ECDHE_ECDSA_WITH_AES_128_CBC_SHA
         - ECDHE_ECDSA_WITH_AES_128_GCM_SHA256
-        - ECDHE_ECDSA_WITH_AES_256_CBC_SHA
         - ECDHE_ECDSA_WITH_AES_256_GCM_SHA384
         - ECDHE_ECDSA_WITH_CHACHA20_POLY1305_SHA256
-        - ECDHE_RSA_WITH_AES_128_CBC_SHA
         - ECDHE_RSA_WITH_AES_128_GCM_SHA256
-        - ECDHE_RSA_WITH_AES_256_CBC_SHA
         - ECDHE_RSA_WITH_AES_256_GCM_SHA384
         - ECDHE_RSA_WITH_CHACHA20_POLY1305_SHA256
-        - RSA_WITH_AES_128_CBC_SHA
-        - RSA_WITH_AES_128_GCM_SHA256
-        - RSA_WITH_AES_256_CBC_SHA
-        - RSA_WITH_AES_256_GCM_SHA384
+        - TLS_AES_128_GCM_SHA256
+        - TLS_AES_256_GCM_SHA384
+        - TLS_CHACHA20_POLY1305_SHA256
   gateway:
     enabled: true
-    # gateway_namespace_override: envoy-gateway-system
+    envoy_system_namespace: envoy-gateway-system
     name: external-http
     namespace_policy: All
     # type: gke
     # class_name: gke-l7-global-external-managed
+    ## GKE bootstrap: a PreSync hook Job creates a self-signed TLS Secret before
+    ## the main sync so the GKE Gateway can provision without waiting for
+    ## cert-manager to complete the ACME HTTP01 challenge.
+    ## cert-manager will replace the Secret with the real cert once the Gateway
+    ## is live.  Override the image if your cluster cannot pull from Docker Hub.
+    bootstrap:
+      image: "alpine:3"
     ## envoy
     proxy_name: external-http-proxy
     type: envoy

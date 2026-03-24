@@ -12,10 +12,6 @@ spec:
   parametersRef:
     group: gateway.envoyproxy.io
     kind: EnvoyProxy
-    name: external-http-proxy
-{{- if .Values.config.gateway.gateway_namespace_override }}
-    namespace: {{ .Values.config.gateway.gateway_namespace_override }}
-{{- else }}
-    namespace: {{ .Values.config.namespace }}
-{{- end }}
+    name: {{ .Values.config.gateway.proxy_name }}
+    namespace: {{ .Values.config.gateway.envoy_system_namespace }}
 {{- end }}
