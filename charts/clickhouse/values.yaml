@@ -80,9 +80,27 @@ config:
 
     ## Delete will mean data loss on PVC size change
     storage_policy: Retain
-    name: ch-cluster
+    ## Name of the ClickHouseInstallation resource (CHI metadata.name).
+    ## This is distinct from the cluster names defined in config.ch.clusters below.
+    installation_name: ch-cluster
     monitoring:
       enabled: true
+
+    ## Clusters to create within this CHI.  All clusters share the same
+    ## Keeper ensemble and the same pod/volume templates defined below.
+    ## The map key is the cluster name as it appears inside ClickHouse.
+    ## Add additional entries to create extra clusters on the same Keeper.
+    clusters:
+      ch-cluster:
+        shards: 1
+        replicas: 1
+      ## Additional cluster example:
+      # analytics:
+      #   shards: 3
+      #   replicas: 2
+      #   schema_policy:       # optional — defaults to replica: None, shard: None
+      #     replica: None
+      #     shard: None
     profiles:
       readonly:
         readonly: 1
@@ -145,8 +163,6 @@ config:
       # disk_volume_size: 1000Gi
       # log_volume_size: 10Gi
       max_concurrent_queries: 100
-      # shardCount: 1
-      # replicasCount: 1
       requests:
         memory: 8Gi
         cpu: 4000m
