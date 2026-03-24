@@ -2,8 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
-[Unreleased/0.0.6]
- - Added support for setting stoageclass. Breaking change for disk volume configuration.
+[0.0.7] - Breaking change
+ - **Breaking:** `config.ch.files` converted from a list to a map. The key is
+   the bare filename (e.g. `distributed_ddl.xml`). Files are placed under
+   `config.d/` by default; set `directory` on an entry to override (e.g.
+   `directory: users.d`). The old `name` field with an embedded path (e.g.
+   `config.d/distributed_ddl.xml`) is no longer used.
+ - **Breaking:** `config.ch.users` converted from a list to a map. The `name`
+   field is removed; the username is now the map key instead.
+ - **Breaking:** `config.ch.profiles` converted from a list to a map. The
+   `name` field is removed; the profile name is now the map key instead.
+ - Maps eliminate duplicate-key ambiguity and make `--set` overrides
+   substantially easier (no more fragile array index addressing).
+
+[0.0.6]
+ - Added support for setting storageclass. Breaking change for disk volume configuration.
 
 [0.0.5]
 
