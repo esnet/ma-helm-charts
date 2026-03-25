@@ -1,9 +1,8 @@
 ---
-# ClickHouse Cluster with 3 shards and 2 replicas
 apiVersion: "clickhouse.altinity.com/v1"
 kind: "ClickHouseInstallation"
 metadata:
-  name: {{ .Values.config.ch.name }}
+  name: {{ .Values.config.ch.installation_name }}
   namespace: {{ .Values.namespace }}
 spec:
   configuration:
@@ -14,32 +13,34 @@ spec:
           port: 2181
 {{- end }}
     clusters:
-      - name: {{ .Values.config.ch.name }}
+{{- range $clusterName, $cluster := .Values.config.ch.clusters }}
+      - name: {{ $clusterName }}
         layout:
-          shardsCount: {{ .Values.config.ch.resources.shardCount | default 1 }}
-          replicasCount: {{ .Values.config.ch.resources.replicasCount | default 1 }}
+          shardsCount: {{ $cluster.shards | default 1 }}
+          replicasCount: {{ $cluster.replicas | default 1 }}
         schemaPolicy:
-          replica: None
-          shard: None
+          replica: {{ dig "schema_policy" "replica" "None" $cluster }}
+          shard: {{ dig "schema_policy" "shard" "None" $cluster }}
+{{- end }}
 
 {{- if .Values.config.ch.users }}
     # User configuration
     users:
-{{- range .Values.config.ch.users }}
-      {{ .name }}/password:
+{{- range $username, $user := .Values.config.ch.users }}
+      {{ $username }}/password:
         valueFrom:
           secretKeyRef:
-            name: {{ .password_secret.name }}
-            key: {{ .password_secret.key }}
-      {{ .name }}/networks/ip: {{ .allowed_ips | default "::/0" | quote }}
-      {{ .name }}/profile: {{ .profile | default "default" | quote }}
-      {{ .name }}/quota: {{ .quota | default "default" | quote }}
-{{- if .access_management }}
-      {{ .name }}/access_management: {{ .access_management }}
+            name: {{ $user.password_secret.name }}
+            key: {{ $user.password_secret.key }}
+      {{ $username }}/networks/ip: {{ $user.allowed_ips | default "::/0" | quote }}
+      {{ $username }}/profile: {{ $user.profile | default "default" | quote }}
+      {{ $username }}/quota: {{ $user.quota | default "default" | quote }}
+{{- if $user.access_management }}
+      {{ $username }}/access_management: {{ $user.access_management }}
 {{- end }}
-{{- if .databases }}
-      {{ .name }}/allow_databases/database:
-{{- range .databases }}
+{{- if $user.databases }}
+      {{ $username }}/allow_databases/database:
+{{- range $user.databases }}
         - {{ . | quote }}
 {{- end }}
 {{- end }}
@@ -49,12 +50,12 @@ spec:
     # Profiles
     profiles:
       {{- if .Values.config.ch.profiles}}
-      {{- range .Values.config.ch.profiles }}
-      {{- if .readonly }}
-      {{ .name }}/readonly: {{ .readonly | quote }}
+      {{- range $profileName, $profile := .Values.config.ch.profiles }}
+      {{- if $profile.readonly }}
+      {{ $profileName }}/readonly: {{ $profile.readonly | quote }}
       {{- end }}
-      {{- if .max_memory_usage }}
-      {{ .name }}/max_memory_usage: {{ .max_memory_usage | quote }}
+      {{- if $profile.max_memory_usage }}
+      {{ $profileName }}/max_memory_usage: {{ $profile.max_memory_usage | quote }}
       {{- end }}
       {{- end }}
       {{- else }}
@@ -89,10 +90,10 @@ spec:
 {{- end }}
 
     files:
-      {{- if and .Values.config.ch.files }}
-      {{- range .Values.config.ch.files }}
-      {{ .name }}: |
-{{ .data | indent 8 }}
+      {{- if .Values.config.ch.files }}
+      {{- range $filename, $file := .Values.config.ch.files }}
+      {{ $file.directory | default "config.d" }}/{{ $filename }}: |
+{{ $file.data | indent 8 }}
       {{- end }}
       {{- end }}
 
@@ -175,7 +176,7 @@ spec:
                       - key: "clickhouse.altinity.com/chi"
                         operator: In
                         values:
-                          - {{ .Values.config.ch.name }}
+                          - {{ .Values.config.ch.installation_name }}
                   topologyKey: "kubernetes.io/hostname"
 {{- end}}
 

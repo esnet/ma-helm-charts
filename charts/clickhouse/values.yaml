@@ -80,18 +80,42 @@ config:
 
     ## Delete will mean data loss on PVC size change
     storage_policy: Retain
-    name: ch-cluster
+    ## Name of the ClickHouseInstallation resource (CHI metadata.name).
+    ## This is distinct from the cluster names defined in config.ch.clusters below.
+    installation_name: ch-cluster
     monitoring:
       enabled: true
+
+    ## Clusters to create within this CHI.  All clusters share the same
+    ## Keeper ensemble and the same pod/volume templates defined below.
+    ## The map key is the cluster name as it appears inside ClickHouse.
+    ## Add additional entries to create extra clusters on the same Keeper.
+    clusters:
+      ch-cluster:
+        shards: 1
+        replicas: 1
+      ## Additional cluster example:
+      # analytics:
+      #   shards: 3
+      #   replicas: 2
+      #   schema_policy:       # optional — defaults to replica: None, shard: None
+      #     replica: None
+      #     shard: None
     profiles:
-      - name: readonly
+      readonly:
         readonly: 1
         max_memory_usage: "10000000000"
-      - name: "default"
+      default:
         readonly: 0
         max_memory_usage: "10000000000"
     files:
-      - name: "config.d/distributed_ddl.xml"
+      ## Key is the filename. Files are placed in config.d/ by default.
+      ## Use `directory` to override the target directory for that file.
+      # my_custom.xml:
+      #   directory: users.d
+      #   data: |
+      #     <clickhouse>...</clickhouse>
+      distributed_ddl.xml:
         data: |
           <clickhouse>
             <distributed_ddl>
@@ -101,27 +125,27 @@ config:
 
     users:
       ## see https://github.com/Altinity/clickhouse-operator/blob/master/docs/chi-examples/05-settings-01-overview.yaml for more detailed examples
-      # New User example
-      # - name: myUsers
+      # New user example — key is the username:
+      # myUser:
       #   password_secret:
       #     name: "clickhouse_users"
-      #     key: "-myUsers-password"
+      #     key: "myUser_password"
       #   allowed_ips: "::/0"
       #   profile: "default"
       #   quota: "default"
       #   access_management: "1"
 
-      - name: admin
+      admin:
         password_secret:
           name: "clickhouse_users"
           key: "admin_password"
         access_management: 1
-      - name: readonly_user
+      readonly_user:
         password_secret:
           name: "clickhouse_users"
           key: "readonly_password"
         profile: "readonly"
-      - name: backup_user
+      backup_user:
         password_secret:
           name: "clickhouse_users"
           key: "backup_password"
@@ -139,8 +163,6 @@ config:
       # disk_volume_size: 1000Gi
       # log_volume_size: 10Gi
       max_concurrent_queries: 100
-      # shardCount: 1
-      # replicasCount: 1
       requests:
         memory: 8Gi
         cpu: 4000m
