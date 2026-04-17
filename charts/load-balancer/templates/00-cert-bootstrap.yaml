@@ -1,4 +1,4 @@
-{{- if and .Values.config.gateway.enabled (eq .Values.config.gateway.type "gke") }}
+{{- if .Values.config.gateway.enabled }}
 {{- $bootstrapImage := .Values.config.gateway.bootstrap.image | default "alpine:3" }}
 ---
 # Bootstrap ServiceAccount – runs as an ArgoCD PreSync hook to break the
