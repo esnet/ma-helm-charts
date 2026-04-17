@@ -1,4 +1,4 @@
-{{- if and .Values.config.gateway.enabled (eq .Values.config.gateway.type "gke") .Values.config.certificate.tlsPolicy.enabled }}
+{{- if and (eq .Values.config.gateway.type "gke") .Values.config.certificate.tlsPolicy.enabled }}
 apiVersion: networking.gke.io/v1
 kind: GCPGatewayPolicy
 metadata:

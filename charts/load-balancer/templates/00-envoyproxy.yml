@@ -1,4 +1,4 @@
-{{- if and .Values.config.gateway.enabled (eq .Values.config.gateway.type "envoy") }}
+{{- if eq .Values.config.gateway.type "envoy" }}
 apiVersion: gateway.envoyproxy.io/v1alpha1
 kind: EnvoyProxy
 metadata:
@@ -27,5 +27,6 @@ spec:
         type: LoadBalancer
         annotations:
           networking.gke.io/load-balancer-type: "External"
-          networking.gke.io/load-balancer-ip-addresses: "{{ .Values.config.gateway.ipv4.address }}{{- if .Values.config.gateway.ipv6.enabled }},{{ .Values.config.gateway.ipv6.address }}{{- end }}"
+          networking.gke.io/load-balancer-ip-addresses: "{{- if .Values.config.gateway.ipv4.enabled }}{{ .Values.config.gateway.ipv4.address }}{{- end }}{{- if and .Values.config.gateway.ipv4.enabled .Values.config.gateway.ipv6.enabled }},{{- end }}{{- if .Values.config.gateway.ipv6.enabled }}{{ .Values.config.gateway.ipv6.address }}{{- end }}"
+
 {{- end }}
