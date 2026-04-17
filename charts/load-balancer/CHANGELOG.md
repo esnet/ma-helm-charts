@@ -1,8 +1,10 @@
 # Changelog
 
 
-[0.1.3]
+[0.1.4]
  - Renamed 00-gke-cert-bootstrap.yaml to 00-cert-bootstrap.yaml and is now used for both GKE and Envoy.
+ - deprecated the config.gateway.enabled, it is now true by default.
+ - Added unit tests for various use cases.
 
 [0.1.3]
 - Fix: `GatewayClass.spec.parametersRef.name` was hardcoded to `external-http-proxy`
