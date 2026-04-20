@@ -40,7 +40,7 @@ jobs:
         uses: helm/chart-testing-action@v2.7.0
 
       - name: Setup Helm repositories
-        run: ./.github/scripts/repo_setup.sh
+        run: python3 ./.github/scripts/repo_setup.py
 
       - name: Run chart-testing (lint)
         run: ct lint --all

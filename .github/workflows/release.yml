@@ -50,7 +50,7 @@ jobs:
 
       - name: Package and Push Helm Charts
         run: |
-          ./.github/scripts/repo_setup.sh
+          python3 ./.github/scripts/repo_setup.py
           for chart in charts/*; do
             if [ -d "$chart" ]; then
               chart_name=$(basename "$chart")
