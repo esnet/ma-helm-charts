@@ -1,0 +1,52 @@
+# namespace: The Kubernetes namespace in which the ratelimiter resources (Deployment, Service, etc.) are deployed.
+namespace: ratelimit
+
+# create_ns: When true, the chart will create the namespace defined above. Set to false if the namespace already exists.
+create_ns: false
+
+# app_namespace: The namespace of the upstream application (e.g. Envoy/OTEL) that the ratelimiter integrates with.
+# Used in the ReferenceGrant to allow cross-namespace SecurityPolicy references.
+app_namespace: otel
+
+ratelimiter:
+  # secret_name: Name of the Kubernetes Secret that contains the API key configuration mounted into the container.
+  secret_name: api-key-config
+
+  # configFrom: Optional references to a ConfigMap and/or Secret whose keys are injected as environment variables (envFrom).
+  # Uncomment and populate one or both fields as needed.
+  configFrom: {}
+  # configFrom:
+  #   configMapRef: myConfigMap
+  #   secretRef: mySecret
+
+  # replicas: Number of ratelimiter pod replicas. The deployment uses a RollingUpdate strategy with maxUnavailable=1.
+  replicas: 3
+
+  image:
+    # repository: Container image registry path for the ratelimiter (api-key-auth) service.
+    repository: us-central1-docker.pkg.dev/ma-infrastructure-474617/docker-registry/otel-api
+    # tag: Image tag to deploy. Pin to a specific version for production stability.
+    tag: "0.1.1"
+
+  # port: The HTTP port the ratelimiter container listens on. Used for the Service, liveness, and readiness probes.
+  port: 9191
+
+  resources:
+    requests:
+      # memory/cpu requests: Minimum resources guaranteed to the container by the scheduler.
+      memory: 64m
+      cpu: 50m
+    limits:
+      # memory/cpu limits: Maximum resources the container is allowed to consume before being OOM-killed or throttled.
+      memory: 128Mi
+      cpu: 100m
+
+# referenceGrant: Feature gate for creating the Gateway API ReferenceGrant resource.
+# Enable this only when a cross-namespace SecurityPolicy (e.g. from Envoy Gateway) needs to
+# reference the ratelimiter Service. Requires the Gateway API CRDs to be installed in the cluster.
+referenceGrant:
+  enabled: false
+
+# extraResources: A list of arbitrary Kubernetes manifests to deploy alongside the chart.
+# Useful for one-off resources (e.g. NetworkPolicies, PodDisruptionBudgets) without modifying the chart templates.
+extraResources: []
