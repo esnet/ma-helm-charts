@@ -1,0 +1,7 @@
+apiVersion: v2
+name: ratelimiter
+description: Rate Limiter ESNet app.
+version: 0.0.1
+maintainers:
+  - name: esnet
+    email: "esnet-seg-ma@lbl.gov"

@@ -1,0 +1,65 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: api-key-auth
+  namespace:  {{ .Values.namespace }}
+
+spec:
+  revisionHistoryLimit: 3
+  replicas: {{ .Values.ratelimiter.replicas }}
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 0
+      maxUnavailable: 1
+  selector:
+    matchLabels:
+      app: api-key-auth
+  template:
+    metadata:
+      labels:
+        app: api-key-auth
+    spec:
+      containers:
+        - name: auth
+          image:  {{ .Values.ratelimiter.image.repository }}:{{ .Values.ratelimiter.image.tag }}
+          imagePullPolicy: Always
+          ports:
+            - containerPort:  {{ .Values.ratelimiter.port }}
+              name: http
+          envFrom:
+          {{- if .Values.ratelimiter.configFrom.configMapRef }}
+            - configMapRef:
+                name: {{ .Values.ratelimiter.configFrom.configMapRef }}
+          {{- end }}
+          {{- if .Values.ratelimiter.configFrom.secretRef }}
+            - secretRef:
+                name: {{ .Values.ratelimiter.configFrom.secretRef }}
+          {{- end }}
+          volumeMounts:
+            - name: config
+              mountPath: /config
+              readOnly: true
+          resources:
+            requests:
+              memory: {{ .Values.ratelimiter.resources.requests.memory | quote }}
+              cpu:  {{ .Values.ratelimiter.resources.requests.cpu | quote }}
+            limits:
+              memory: {{ .Values.ratelimiter.resources.limits.memory | quote }}
+              cpu:  {{ .Values.ratelimiter.resources.limits.cpu | quote }}
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: {{ .Values.ratelimiter.port }}
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: {{ .Values.ratelimiter.port }}
+            initialDelaySeconds: 5
+            periodSeconds: 5
+      volumes:
+        - name: config
+          secret:
+            secretName:  {{ .Values.ratelimiter.secret_name }}

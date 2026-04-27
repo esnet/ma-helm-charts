@@ -1,0 +1,15 @@
+{{- if .Values.referenceGrant.enabled }}
+apiVersion: gateway.networking.k8s.io/v1beta1
+kind: ReferenceGrant
+metadata:
+  name: allow-auth-service-access
+  namespace:  {{ .Values.namespace }}
+spec:
+  from:
+    - group: gateway.envoyproxy.io
+      kind: SecurityPolicy
+      namespace:  {{ .Values.app_namespace }}
+  to:
+    - group: ""
+      kind: Service
+{{- end }}
