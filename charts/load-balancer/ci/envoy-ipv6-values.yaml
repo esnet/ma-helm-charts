@@ -1,0 +1,16 @@
+config:
+  argocd_annotation: false
+  gateway:
+    type: envoy
+    class_name: envoy
+    ipv4:
+      enabled: false
+      address_type: IPAddress
+      address: ""
+    ipv6:
+      enabled: true
+      address: "2001:db8::1"
+      address_type: IPAddress
+  certificate:
+    tlsPolicy:
+      enabled: true

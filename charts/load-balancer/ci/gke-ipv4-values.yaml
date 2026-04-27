@@ -1,0 +1,15 @@
+config:
+  argocd_annotation: false
+  gateway:
+    type: gke
+    class_name: gke-l7-global-external-managed
+    ipv4:
+      enabled: true
+      address: test-staging-ipv4
+      address_type: NamedAddress
+    ipv6:
+      enabled: false
+      address: ""
+  certificate:
+    tlsPolicy:
+      enabled: false

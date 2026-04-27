@@ -1,4 +1,4 @@
-{{- if and .Values.config.gateway.enabled (eq .Values.config.gateway.type "envoy") .Values.config.certificate.tlsPolicy.enabled }}
+{{- if and (eq .Values.config.gateway.type "envoy") .Values.config.certificate.tlsPolicy.enabled }}
 apiVersion: gateway.envoyproxy.io/v1alpha1
 kind: ClientTrafficPolicy
 metadata:

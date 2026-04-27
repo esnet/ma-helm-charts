@@ -1,10 +1,9 @@
-{{- if and .Values.config.gateway.enabled (eq .Values.config.gateway.type "gke") }}
 {{- $bootstrapImage := .Values.config.gateway.bootstrap.image | default "alpine:3" }}
 ---
 # Bootstrap ServiceAccount – runs as an ArgoCD PreSync hook to break the
-# GKE Gateway / cert-manager chicken-and-egg race condition.
+# Envoy/GKE Gateway / cert-manager chicken-and-egg race condition.
 # The Job creates a self-signed TLS Secret before the main sync so the
-# GKE Gateway can provision.  cert-manager replaces it with the real
+# Gateway can provision.  cert-manager replaces it with the real
 # Let's Encrypt cert once the Gateway is live and the HTTP01 challenge
 # can be served.
 apiVersion: v1
@@ -140,4 +139,3 @@ spec:
                 cat /tmp/response.json
                 exit 1
               fi
-{{- end }}

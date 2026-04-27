@@ -1,0 +1,14 @@
+config:
+  argocd_annotation: false
+  gateway:
+    type: envoy
+    class_name: envoy
+    ipv4:
+      enabled: true
+      address: "10.0.0.1"
+    ipv6:
+      enabled: false
+      address: ""
+  certificate:
+    tlsPolicy:
+      enabled: false
