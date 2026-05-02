@@ -1,0 +1,417 @@
+config:
+  # ---------------------------------------------------------------------------
+  # kafka — Strimzi Kafka cluster (renders kafka.yaml + kraft.yaml)
+  # ---------------------------------------------------------------------------
+  # This section configures the main `Kafka` custom resource managed by the
+  # Strimzi operator, as well as the broker `KafkaNodePool`. The controller
+  # (KRaft) node pool is configured separately under `keeper` below.
+  kafka:
+    # Name of the Kafka CR. All dependent resources (topics, users, TLSRoutes)
+    # reference this name via the `strimzi.io/cluster` label.
+    clusterName: kafka-cluster
+
+    # Kafka version to deploy. Defaults to Chart.AppVersion if omitted.
+    version: "3.9.0"
+
+    # Number of broker pods in the broker KafkaNodePool (kraft.yaml).
+    replicas: 3
+
+    # Name of the broker KafkaNodePool resource (kraft.yaml).
+    brokerPoolName: kafka
+
+    # JMX — Java Management Extensions metrics export.
+    # When enabled, Strimzi attaches a JMX exporter sidecar to each broker
+    # pod so that tools like Prometheus can scrape Kafka metrics.
+    jmx:
+      enabled: false
+
+    # CPU / memory for broker pods.
+    resources:
+      limits:
+        cpu: "4"
+        memory: 34Gi
+      requests:
+        cpu: "2"
+        memory: 32Gi
+
+    # Persistent storage volumes attached to each broker pod (JBOD layout).
+    # Multiple volumes can be listed; each gets a unique `id`.
+    #
+    # Fields:
+    #   id            — Numeric volume ID. Must be stable; changing it
+    #                   forces a rolling replacement of the pods.
+    #   type          — `persistent-claim` (PVC) or `ephemeral`.
+    #   size          — PVC capacity (e.g. "2500Gi").
+    #   kraftMetadata — Set to `shared` on the volume that should store KRaft
+    #                   metadata (only one volume per pool needs this).
+    #   deleteClaim   — Whether Strimzi should delete the PVC when the pod is
+    #                   removed. Set to `false` to preserve data across pod
+    #                   recreation.
+    storage:
+      volumes:
+        - id: 0
+          type: persistent-claim
+          size: 2500Gi
+          kraftMetadata: shared
+          deleteClaim: false
+
+    # Kafka broker configuration properties forwarded verbatim to
+    # `spec.kafka.config` in the Kafka CR.
+    #
+    # Key settings:
+    #   offsets.topic.replication.factor          — Replication factor for the
+    #       internal __consumer_offsets topic. Should match or be ≤ kafka.replicas.
+    #   transaction.state.log.replication.factor  — Replication factor for the
+    #       internal transaction state log topic.
+    #   transaction.state.log.min.isr             — Minimum in-sync replicas
+    #       required before a transaction state log write succeeds.
+    #   default.replication.factor                — Default replication factor
+    #       applied to newly created topics that don't specify one.
+    #   min.insync.replicas                       — Minimum number of replicas
+    #       that must acknowledge a write for the producer to consider it
+    #       successful (when acks=all). Guards against data loss.
+    config:
+      offsets.topic.replication.factor: 3
+      transaction.state.log.replication.factor: 3
+      transaction.state.log.min.isr: 2
+      default.replication.factor: 3
+      min.insync.replicas: 2
+
+    # Kafka listeners — each entry creates one listener in `spec.kafka.listeners`.
+    # The map key becomes the listener `name` (max 11 chars, lowercase).
+    #
+    # Common fields:
+    #   port            — Port the listener binds on inside the pod.
+    #   type            — `internal` (cluster-only), `loadbalancer`, or
+    #                     `cluster-ip` (used with a Gateway).
+    #   tls             — Whether TLS is enabled on this listener.
+    #   authentication  — Optional. Omit for unauthenticated listeners.
+    #     type          — `tls` (mTLS cert auth) or `scram-sha-512` (password).
+    #     sasl          — Set to `true` when using SCRAM over TLS.
+    #   configuration   — Optional. LoadBalancer-specific settings.
+    #     ipFamilyPolicy    — `SingleStack` or `RequireDualStack`.
+    #     ipFamilies        — List of IP families (`IPv4`, `IPv6`).
+    #     staticIpNames     — GKE named-address(es) to pin the LB IP(s).
+    #                         Multiple names → one per broker + one bootstrap.
+    #   gateway         — Optional. When set, a TLSRoute is created in
+    #                     gateway.yaml pointing at this listener's bootstrap
+    #                     service instead of provisioning a load balancer.
+    #     name          — Name of the Envoy Gateway `Gateway` resource.
+    #     sectionName   — Listener section on the Gateway to attach to.
+    listeners:
+      # Unauthenticated plaintext — for intra-cluster clients only.
+      plain:
+        port: 9092
+        type: internal
+        tls: false
+      # mTLS — for intra-cluster clients that present a client certificate.
+      # Strimzi issues client certs automatically for `authType: tls` KafkaUsers.
+      tls:
+        port: 9093
+        type: internal
+        tls: true
+        authentication:
+          type: tls
+      # External SCRAM-SHA-512 — dual-stack loadbalancer (IPv6 + IPv4):
+      # extusers:
+      #   port: 9095
+      #   type: loadbalancer
+      #   tls: true
+      #   authentication:
+      #     type: scram-sha-512
+      #     sasl: true
+      #   configuration:
+      #     ipFamilyPolicy: RequireDualStack
+      #     ipFamilies:
+      #       - IPv6
+      #       - IPv4
+      #     staticIpNames:
+      #       - kafka-dev-staging-ipv6
+      #       - kafka-dev-staging-ipv4
+      #
+      # External SCRAM-SHA-512 — single-stack loadbalancer (IPv4 only):
+      # extusers:
+      #   port: 9095
+      #   type: loadbalancer
+      #   tls: true
+      #   authentication:
+      #     type: scram-sha-512
+      #     sasl: true
+      #   configuration:
+      #     ipFamilyPolicy: SingleStack
+      #     ipFamilies:
+      #       - IPv4
+      #     staticIpNames:
+      #       - kafka-dev-staging-ipv4
+      #
+      # External SCRAM-SHA-512 — via gateway (no IP config needed):
+      # extusers:
+      #   port: 9095
+      #   type: cluster-ip
+      #   tls: true
+      #   authentication:
+      #     type: scram-sha-512
+      #     sasl: true
+      #   gateway:
+      #     name: external-http
+      #     sectionName: extusers
+      #
+      # External TLS — single-stack loadbalancer (IPv4 only):
+      # external:
+      #   port: 9094
+      #   type: loadbalancer
+      #   tls: true
+      #   authentication:
+      #     type: tls
+      #   configuration:
+      #     ipFamilyPolicy: SingleStack
+      #     ipFamilies:
+      #       - IPv4
+      #     staticIpNames:
+      #       - kafka-dev-staging-ipv4
+      #
+      # External TLS — via gateway (no IP config needed):
+      # external:
+      #   port: 9094
+      #   type: cluster-ip
+      #   tls: true
+      #   authentication:
+      #     type: tls
+      #   gateway:
+      #     name: external-http
+      #     sectionName: external
+
+  # ---------------------------------------------------------------------------
+  # keeper — KRaft controller node pool (renders kraft.yaml)
+  # ---------------------------------------------------------------------------
+  # Configures the `KafkaNodePool` with `roles: [controller]`. In KRaft mode
+  # these pods replace ZooKeeper and manage cluster metadata (leader election,
+  # topic partition assignments, etc.). They do NOT serve producer/consumer
+  # traffic. Anti-affinity rules ensure one controller per node.
+  keeper:
+    # Number of controller pods. Must be an odd number (1, 3, 5…) so that
+    # a quorum majority can always be reached. 3 is the recommended minimum
+    # for production — tolerates one controller failure.
+    replicas: 3
+
+    # How long (seconds) Kubernetes waits for a controller pod to finish
+    # in-flight work before forcibly killing it during a rolling update or
+    # node drain. Increase if controller shutdown logs show truncated commits.
+    terminationGracePeriodSeconds: 30
+
+    # CPU / memory for controller pods. Controllers are metadata-only so they
+    # need far less memory than brokers.
+    resources:
+      limits:
+        cpu: "2"
+        memory: 3Gi
+      requests:
+        cpu: "1"
+        memory: 2Gi
+
+    # Persistent storage for KRaft metadata logs. See kafka.storage.volumes
+    # for field descriptions. Controllers only need a single small volume.
+    storage:
+      volumes:
+        - id: 0
+          type: persistent-claim
+          size: 100Gi
+          kraftMetadata: shared
+          deleteClaim: false
+
+  # ---------------------------------------------------------------------------
+  # storageClasses — GCE StorageClass resources (renders storage-class.yaml)
+  # ---------------------------------------------------------------------------
+  # Defines Kubernetes StorageClasses backed by GCE Persistent Disks.
+  # These are referenced by PVCs created for broker and controller volumes.
+  #
+  # Fields:
+  #   name                — StorageClass resource name (referenced in PVCs).
+  #   provisioner         — CSI / in-tree provisioner. Use
+  #                         `pd.csi.storage.gke.io` for the modern GKE CSI
+  #                         driver, or `kubernetes.io/gce-pd` for legacy.
+  #   type                — GCE disk type: `pd-ssd` or `pd-standard`.
+  #   fstype              — Filesystem to format: `ext4` or `xfs`.
+  #   replicationType     — GCE disk replication: `none` (zonal) or
+  #                         `regional-pd` (multi-zone, higher cost).
+  #   volumeBindingMode   — `WaitForFirstConsumer` defers PVC binding until a
+  #                         pod is scheduled, ensuring the disk lands in the
+  #                         same zone as the pod. Prefer this over `Immediate`.
+  #   allowVolumeExpansion — Whether PVCs backed by this class can be resized
+  #                          without re-provisioning.
+  storageClasses:
+    ssd:
+      name: zk-ssd
+      provisioner: kubernetes.io/gce-pd
+      type: pd-ssd
+      fstype: ext4
+      replicationType: none
+      volumeBindingMode: WaitForFirstConsumer
+      allowVolumeExpansion: true
+    standard:
+      name: zk-standard
+      provisioner: kubernetes.io/gce-pd
+      type: pd-standard
+      fstype: ext4
+      replicationType: none
+      volumeBindingMode: WaitForFirstConsumer
+      allowVolumeExpansion: true
+
+  # ---------------------------------------------------------------------------
+  # topics — KafkaTopic resources (renders topics.yaml)
+  # ---------------------------------------------------------------------------
+  # Each entry creates one `KafkaTopic` CR managed by Strimzi's Topic Operator.
+  # The Topic Operator reconciles these CRs with the actual topics on the broker,
+  # so adding / removing entries here will create / delete topics in Kafka.
+  #
+  # The map key is used only for organisation within values files; the actual
+  # Kubernetes resource name is derived from `name` (underscores replaced with
+  # dashes, prefixed with `topic-`).
+  #
+  # Fields:
+  #   name        — The Kafka topic name as it appears on the broker.
+  #                 Convention in this project uses underscores (e.g.
+  #                 `stardust_firefly`); the K8s resource name replaces them
+  #                 with dashes automatically.
+  #   partitions  — Number of partitions. More partitions → higher throughput
+  #                 and parallelism, but more overhead. Cannot be decreased
+  #                 after creation without deleting and recreating the topic.
+  #   replicas    — Replication factor. Should be ≤ kafka.replicas and ≥
+  #                 min.insync.replicas + 1 for durability.
+  #   retention   — How long (milliseconds) Kafka retains messages before
+  #                 deleting them. 604800000 = 7 days.
+  topics:
+    firefly:
+      name: stardust_firefly
+      partitions: 3
+      replicas: 3
+      retention: 604800000
+
+  # ---------------------------------------------------------------------------
+  # users — KafkaUser resources (renders kafka-users.yaml)
+  # ---------------------------------------------------------------------------
+  # Each entry creates one `KafkaUser` CR. Strimzi's User Operator reconciles
+  # these with Kafka's ACL store and, for SCRAM users, manages credential
+  # secrets.
+  #
+  # IMPORTANT: `name` is used as the Kubernetes resource name and must be
+  # unique across all entries. Duplicate names cause kustomize to error with
+  # "already registered id".
+  #
+  # Fields:
+  #   name      — Kubernetes resource name for the KafkaUser (and the Kafka
+  #               principal). Must be unique within this map.
+  #   authType  — Authentication mechanism:
+  #                 `scram-sha-512` — password-based. Strimzi reads the
+  #                   password from the Secret named in `secretRef.name` at
+  #                   key `<name>-password` and stores the salted credential
+  #                   in Kafka. The Secret must be pre-populated (e.g. via
+  #                   ExternalSecrets) before the User Operator reconciles.
+  #                 `tls` — mutual TLS. Strimzi generates a client certificate
+  #                   and stores it in a Secret named after the KafkaUser
+  #                   (keys: `user.crt`, `user.key`, `user.p12`). No external
+  #                   secret is required.
+  #   superUser — Optional boolean. When `true`, the user's principal
+  #               (`CN=<name>`) is added to the Kafka CR's `superUsers` list,
+  #               granting cluster-wide admin access regardless of ACLs.
+  #   acls      — Optional map of named ACL rules. Each key is a descriptive
+  #               label (used only for readability); the value defines:
+  #     resource:
+  #       type        — Kafka resource type: `topic`, `group`, `cluster`,
+  #                     or `transactionalId`.
+  #       name        — Resource name or pattern. Use `*` with
+  #                     `patternType: literal` for a wildcard on all resources
+  #                     of that type.
+  #       patternType — `literal` (exact match) or `prefix` (prefix match).
+  #     operations    — List of allowed operations on the resource. Common
+  #                     values: `Read`, `Write`, `Describe`, `DescribeConfigs`,
+  #                     `Create`, `Delete`, `Alter`, `All`.
+  users:
+    admin:
+      name: admin-user
+      authType: scram-sha-512
+      superUser: true
+    # sd:
+    #   name: sd-user
+    #   authType: scram-sha-512
+    #   acls:
+    #     topicAll:
+    #       resource:
+    #         type: topic
+    #         name: "*"
+    #         patternType: literal
+    #       operations:
+    #         - All
+    #     groupAll:
+    #       resource:
+    #         type: group
+    #         name: "*"
+    #         patternType: literal
+    #       operations:
+    #         - All
+    # ht:
+    #   name: ht-user
+    #   authType: scram-sha-512
+    #   acls:
+    #     topicRead:
+    #       resource:
+    #         type: topic
+    #         name: stardust_firefly
+    #         patternType: literal
+    #       operations:
+    #         - Read
+    #     topicDescribe:
+    #       resource:
+    #         type: topic
+    #         name: stardust_firefly
+    #         patternType: literal
+    #       operations:
+    #         - DescribeConfigs
+    #     groupRead:
+    #       resource:
+    #         type: group
+    #         name: ht-consumer-01
+    #         patternType: literal
+    #       operations:
+    #         - Read
+
+    # Example: Strimzi-managed TLS user. No ExternalSecret is created.
+    # Strimzi generates and rotates the certificate automatically, storing
+    # it in a secret named after the KafkaUser (user.crt / user.key / user.p12).
+    # ops:
+    #   name: ops-user
+    #   authType: tls
+    #   acls:
+    #     topicRead:
+    #       resource:
+    #         type: topic
+    #         name: stardust_firefly
+    #         patternType: literal
+    #       operations:
+    #         - Describe
+    #         - Read
+    #     groupRead:
+    #       resource:
+    #         type: group
+    #         name: ops-consumer-01
+    #         patternType: literal
+    #       operations:
+    #         - Read
+
+  # ---------------------------------------------------------------------------
+  # secretRef — shared Secret for SCRAM-SHA-512 user passwords
+  # ---------------------------------------------------------------------------
+  # The Kubernetes Secret named here is expected to contain one key per SCRAM
+  # user in the format `<user.name>-password`. Typically provisioned via an
+  # ExternalSecret that pulls from a secrets manager (e.g. GCP Secret Manager).
+  # TLS users (`authType: tls`) do not use this secret.
+  secretRef:
+    name: kafka-staging
+
+# Kubernetes namespace to deploy all resources into.
+namespace: kafka
+
+# Whether to create the namespace as part of this chart. Set to `false` if
+# the namespace is managed externally (e.g. by a parent chart or cluster
+# bootstrap process).
+create_ns: false

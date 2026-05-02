@@ -10,6 +10,7 @@ logger = logging.getLogger(__name__)
 
 HELM_REPOS = {
     "altinity": "https://helm.altinity.com",
+    "strimzi": "https://strimzi.io/charts/",
     # "bitnami": "https://charts.bitnami.com/bitnami",
 }
 

@@ -1,0 +1,16 @@
+{{- range .Values.config.topics }}
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaTopic
+metadata:
+  name: topic-{{ .name | replace "_" "-" }}
+  labels:
+    strimzi.io/cluster: {{ $.Values.config.kafka.clusterName }}
+    {{- include "kafka.componentLabels" (list $ "kafka-topic") | nindent 4 }}
+spec:
+  topicName: {{ .name }}
+  partitions: {{ .partitions }}
+  replicas: {{ .replicas }}
+  config:
+    retention.ms: {{ .retention }}
+{{- end }}

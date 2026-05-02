@@ -1,0 +1,37 @@
+{{- range $key, $user := .Values.config.users }}
+---
+apiVersion: kafka.strimzi.io/v1beta2
+kind: KafkaUser
+metadata:
+  name: {{ $user.name }}
+  labels:
+    strimzi.io/cluster: {{ $.Values.config.kafka.clusterName }}
+    {{- include "kafka.componentLabels" (list $ "kafka-user") | nindent 4 }}
+spec:
+  authentication:
+    {{- if eq $user.authType "scram-sha-512" }}
+    type: scram-sha-512
+    password:
+      valueFrom:
+        secretKeyRef:
+          name: {{ $.Values.config.secretRef.name }}
+          key: {{ $user.name }}-password
+    {{- else }}
+    type: tls
+    {{- end }}
+  {{- if $user.acls }}
+  authorization:
+    type: simple
+    acls:
+      {{- range $user.acls }}
+      - resource:
+          type: {{ .resource.type }}
+          name: {{ .resource.name | quote }}
+          patternType: {{ .resource.patternType }}
+        operations:
+          {{- range .operations }}
+          - {{ . }}
+          {{- end }}
+      {{- end }}
+  {{- end }}
+{{- end }}

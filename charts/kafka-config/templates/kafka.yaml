@@ -1,0 +1,88 @@
+apiVersion: kafka.strimzi.io/v1beta2
+kind: Kafka
+metadata:
+  name: {{ .Values.config.kafka.clusterName }}
+  annotations:
+    strimzi.io/node-pools: enabled
+    strimzi.io/kraft: enabled
+  labels:
+    {{- include "kafka.componentLabels" (list . "kafka") | nindent 4 }}
+spec:
+  kafka:
+    version: {{ .Values.config.kafka.version | default .Chart.AppVersion | quote }}
+    listeners:
+      {{- range $name, $listener := .Values.config.kafka.listeners }}
+      - name: {{ $name }}
+        port: {{ $listener.port }}
+        type: {{ $listener.type }}
+        tls: {{ $listener.tls }}
+        {{- if $listener.authentication }}
+        authentication:
+          type: {{ $listener.authentication.type }}
+          {{- if $listener.authentication.sasl }}
+          sasl: {{ $listener.authentication.sasl }}
+          {{- end }}
+        {{- end }}
+        {{- if $listener.configuration }}
+        configuration:
+          {{- if $listener.configuration.staticIpNames }}
+          bootstrap:
+            annotations:
+              networking.gke.io/load-balancer-ip-addresses: {{ join "," $listener.configuration.staticIpNames }}
+          {{- end }}
+          ipFamilyPolicy: {{ $listener.configuration.ipFamilyPolicy }}
+          ipFamilies:
+            {{- range $listener.configuration.ipFamilies }}
+            - {{ . }}
+            {{- end }}
+        {{- end }}
+      {{- end }}
+    {{- $superUsers := list }}
+    {{- range $key, $user := .Values.config.users }}
+    {{- if $user.superUser }}
+    {{- $superUsers = append $superUsers (printf "CN=%s" $user.name) }}
+    {{- end }}
+    {{- end }}
+    authorization:
+      type: simple
+      {{- if $superUsers }}
+      superUsers:
+        {{- range $superUsers }}
+        - {{ . }}
+        {{- end }}
+      {{- end }}
+    readinessProbe:
+      initialDelaySeconds: 30
+      timeoutSeconds: 10
+    livenessProbe:
+      initialDelaySeconds: 30
+      timeoutSeconds: 10
+    config:
+      {{- range $key, $value := .Values.config.kafka.config }}
+      {{ $key }}: {{ $value }}
+      {{- end }}
+    resources:
+      limits:
+        cpu: {{ .Values.config.kafka.resources.limits.cpu | quote }}
+        memory: {{ .Values.config.kafka.resources.limits.memory }}
+      requests:
+        cpu: {{ .Values.config.kafka.resources.requests.cpu | quote }}
+        memory: {{ .Values.config.kafka.resources.requests.memory }}
+    storage:
+      type: jbod
+      volumes:
+        {{- range .Values.config.kafka.storage.volumes }}
+        - id: {{ .id }}
+          type: {{ .type }}
+          size: {{ .size }}
+          {{- if .kraftMetadata }}
+          kraftMetadata: {{ .kraftMetadata }}
+          {{- end }}
+          deleteClaim: {{ .deleteClaim }}
+        {{- end }}
+  {{- if .Values.config.kafka.jmx.enabled }}
+  jmxOptions: {}
+  {{- end }}
+  entityOperator:
+    topicOperator: {}
+    userOperator: {}

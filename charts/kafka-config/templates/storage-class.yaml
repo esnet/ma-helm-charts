@@ -1,0 +1,16 @@
+{{- range .Values.config.storageClasses }}
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: {{ .name }}
+  labels:
+    {{- include "kafka.componentLabels" (list $ "storage") | nindent 4 }}
+provisioner: {{ .provisioner }}
+parameters:
+  type: {{ .type }}
+  fstype: {{ .fstype }}
+  replication-type: {{ .replicationType }}
+volumeBindingMode: {{ .volumeBindingMode }}
+allowVolumeExpansion: {{ .allowVolumeExpansion }}
+{{- end }}
