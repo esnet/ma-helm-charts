@@ -1,6 +1,6 @@
 {{- if .Values.config.tls.routes }}
 # TLSRoute for native ClickHouse protocol (port 9440 - Passthrough)
-apiVersion: gateway.networking.k8s.io/v1alpha2
+apiVersion: gateway.networking.k8s.io/{{ .Values.config.tls.route_api_version }}
 kind: TLSRoute
 metadata:
   name: clickhouse-tcp-secure
@@ -19,7 +19,7 @@ spec:
           port: 9440
 #
 ---
-apiVersion: gateway.networking.k8s.io/v1alpha2
+apiVersion: gateway.networking.k8s.io/{{ .Values.config.tls.route_api_version }}
 kind: TLSRoute
 metadata:
   name: clickhouse-https-web
