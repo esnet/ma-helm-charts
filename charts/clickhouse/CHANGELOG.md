@@ -2,6 +2,10 @@
 
 All notable changes to this project will be documented in this file.
 
+[0.0.8]
+  - TLSRoutes API version are now configurable. Defaults to v1.
+  - Envoy pattern will require +1.8.0 if using v1.
+
 [0.0.7] - Breaking change
  - **Breaking:** `config.ch.resources.shardCount` and `replicasCount` removed.
    Cluster topology is now defined in `config.ch.clusters`, a map where each
