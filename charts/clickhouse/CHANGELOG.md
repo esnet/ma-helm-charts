@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file.
 
+[0.0.9]
+  - Added per-user `grants` support. Each entry under `config.ch.users.<username>.grants`
+    is a full GRANT statement rendered as a `<grants><query>...</query></grants>` block
+    in users.xml, using ClickHouse's native grant configuration. Any valid ClickHouse
+    GRANT syntax is accepted (privileges, ON CLUSTER, WITH GRANT OPTION, etc.).
+    Note: `grants` and `allow_databases` are mutually exclusive per ClickHouse's user
+    configuration rules — do not use both on the same user.
+
 [0.0.8]
   - TLSRoutes API version are now configurable. Defaults to v1.
   - Envoy pattern will require +1.8.0 if using v1.

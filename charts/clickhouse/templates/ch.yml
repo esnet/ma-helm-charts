@@ -44,6 +44,12 @@ spec:
         - {{ . | quote }}
 {{- end }}
 {{- end }}
+{{- if $user.grants }}
+      {{ $username }}/grants/query:
+{{- range $user.grants }}
+        - {{ . | quote }}
+{{- end }}
+{{- end }}
 {{- end }}
 {{- end }}
 

@@ -135,6 +135,13 @@ config:
       #   profile: "default"
       #   quota: "default"
       #   access_management: "1"
+      #   ## grants renders as <grants><query>...</query></grants> in users.xml.
+      #   ## Each entry is a full GRANT statement. Any valid ClickHouse GRANT syntax is accepted.
+      #   ## NOTE: grants and allow_databases are mutually exclusive — do not use both on the same user.
+      #   grants:
+      #     - "GRANT SHOW DATABASES TO myUser"
+      #     - "GRANT SELECT ON system.clusters TO myUser"
+      #     - "GRANT SELECT,INSERT,ALTER,CREATE TABLE,DROP TABLE,TRUNCATE,OPTIMIZE ON mydb.* TO myUser"
 
       admin:
         password_secret:
