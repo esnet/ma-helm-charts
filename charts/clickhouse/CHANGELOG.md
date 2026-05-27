@@ -3,29 +3,46 @@
 All notable changes to this project will be documented in this file.
 
 [0.0.9] - Unreleased
-  - New: Added per-user `grants` support. Each entry under `config.ch.users.<username>.grants`
-    is a full GRANT statement rendered as a `<grants><query>...</query></grants>` block
-    in users.xml, using ClickHouse's native grant configuration. Any valid ClickHouse
-    GRANT syntax is accepted (privileges, ON CLUSTER, WITH GRANT OPTION, etc.).
-    Note: `grants` and `allow_databases` are mutually exclusive per ClickHouse's user
-    configuration rules — do not use both on the same user.
-  - Fix: TLSRoutes now use .Values.namespace instead of hardcoded "clickhouse" namespace.
-  - Fix: TLSRoute backend service name now derived from config.ch.installation_name instead of
-    hardcoded "clickhouse-ch-cluster". Changing installation_name no longer silently breaks routes.
-  - Fix: TLSRoutes are now gated on both config.tls.enabled AND config.tls.routes, preventing
+
+  Added:
+  - Per-user `grants` support. Each entry under `config.ch.users.<username>.grants` is a full
+    GRANT statement rendered as a `<grants><query>...</query></grants>` block in users.xml using
+    ClickHouse's native grant configuration. Any valid ClickHouse GRANT syntax is accepted
+    (privileges, ON CLUSTER, WITH GRANT OPTION, etc.).
+    Note: `grants` and `allow_databases` are mutually exclusive — do not use both on the same user.
+  - Standard Helm labels (`helm.sh/chart`, `app.kubernetes.io/*`) added to all resources via a
+    new `_helpers.tpl` with a `clickhouse.labels` helper.
+  - Gateway parentRef name and section names are now configurable via `config.tls.gateway`
+    (`name`, `tcp_section`, `https_section`). Existing gateway names are used as defaults.
+  - `config.imagePullPolicy` controls the image pull policy for all containers (clickhouse,
+    clickhouse-keeper, clickhouse-backup). Defaults to `IfNotPresent`.
+  - `Chart.yaml`: added `type: application` and `appVersion`.
+
+  Fixed:
+  - TLSRoutes now use `{{ .Values.namespace }}` instead of hardcoded `"clickhouse"` namespace.
+  - TLSRoute backend service name now derived from `config.ch.installation_name` instead of
+    hardcoded `"clickhouse-ch-cluster"`. Changing `installation_name` no longer silently breaks routes.
+  - TLSRoutes are now gated on both `config.tls.enabled` AND `config.tls.routes`, preventing
     routes being rendered without TLS configured on the ClickHouse side.
-  - New: Gateway parentRef name and sectionNames are now configurable via config.tls.gateway
-    (name, tcp_section, https_section) with existing values as defaults.
-  - Fix: config.ch.storage_policy is now correctly used for the CHI storageManagement reclaimPolicy.
-    Previously config.chk.storage_policy was used for both keeper and ClickHouse PVCs.
-  - Fix: Backup metrics Service (ch-backups-metrics) is now gated on both config.backups.enabled
-    AND config.backups.monitoring.enabled. Previously it was always rendered, creating a headless
+  - `config.ch.storage_policy` is now correctly used for the CHI `storageManagement.reclaimPolicy`.
+    Previously `config.chk.storage_policy` was applied to both keeper and ClickHouse PVCs.
+  - Backup metrics Service (`ch-backups-metrics`) is now gated on both `config.backups.enabled`
+    AND `config.backups.monitoring.enabled`. Previously it was always rendered, creating a headless
     service with no endpoints when backups were disabled.
-  - Fix: Profile rendering is now fully generic — any key/value pair under a profile is rendered.
-    Previously only readonly and max_memory_usage were handled, and readonly: 0 was silently
-    dropped due to a falsy guard (if 0 is false in Go templates).
-  - Fix: Default user secret names standardised to use hyphens (clickhouse-users). The previous
-    default clickhouse_users (underscore) is an invalid Kubernetes resource name per RFC 1123.
+  - Profile rendering is now fully generic — any key/value pair under a profile is rendered.
+    Previously only `readonly` and `max_memory_usage` were handled, and `readonly: 0` was silently
+    dropped due to a falsy guard (`if 0` is false in Go templates).
+  - Default user secret names standardised to use hyphens (`clickhouse-users`). The previous
+    default `clickhouse_users` (underscore) is an invalid Kubernetes resource name per RFC 1123.
+  - `imagePullPolicy` on `clickhouse-backup` changed from hardcoded `Always` to use the new
+    `config.imagePullPolicy` value. All three containers now use a consistent policy.
+  - `NOTES.txt`: fixed typos (`"Please not"` → `"Please note"`, `"opertor"` → `"operator"`),
+    corrected cluster name reference, and added useful post-install connection information.
+  - `Chart.yaml`: fixed description typo (`"a the affinity"`).
+
+  Changed:
+  - `config.backups.bucket`, `config.tls.cert_name`, and `config.domains` cleared of
+    environment-specific defaults. These must now be explicitly set per deployment.
 
 [0.0.8]
   - TLSRoutes API version are now configurable. Defaults to v1.

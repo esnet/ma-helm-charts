@@ -7,7 +7,7 @@ config:
     ## When enabled will generate a httproute
     routes: true
     ## Use in configuring clickhouse TLS connectivity
-    cert_name: tls-cert2
+    cert_name: ""  # required when tls.enabled: true
     ## Gateway parentRef configuration for TLSRoutes
     gateway:
       name: external-http
@@ -19,8 +19,7 @@ config:
   ## IfNotPresent is appropriate for pinned version tags. Use Always during development or with floating tags.
   imagePullPolicy: IfNotPresent
   ## Used when configuring a tlsroute, feel free to ignore if you're not using the feature
-  domains:
-    - localhost.nip.io
+  domains: []  # required when tls.routes: true
 
   ## Optionally enable a pod to enable backups
   backups:
@@ -35,7 +34,7 @@ config:
     backup_interval: 24h
     full_interval: 168h
     storage: gcs
-    bucket: clickhouse-stardust-staging
+    # bucket: ""  # required when backups.enabled: true and storage: gcs
     backup_path: backup/shard-{shard}
     ## these should point to localhost:9000 but if need be they are exposed as configurable
     # clickhouse_host: localhost.nip.io
