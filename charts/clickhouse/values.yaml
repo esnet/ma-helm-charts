@@ -8,6 +8,11 @@ config:
     routes: true
     ## Use in configuring clickhouse TLS connectivity
     cert_name: tls-cert2
+    ## Gateway parentRef configuration for TLSRoutes
+    gateway:
+      name: external-http
+      tcp_section: clickhouse-secure
+      https_section: ssl-validation
   ## Clickhouse image tag to use
   clickhouse_version: 25.9
   ## Used when configuring a tlsroute, feel free to ignore if you're not using the feature
@@ -129,7 +134,7 @@ config:
       # New user example — key is the username:
       # myUser:
       #   password_secret:
-      #     name: "clickhouse_users"
+      #     name: "clickhouse-users"
       #     key: "myUser_password"
       #   allowed_ips: "::/0"
       #   profile: "default"
@@ -145,17 +150,17 @@ config:
 
       admin:
         password_secret:
-          name: "clickhouse_users"
+          name: "clickhouse-users"
           key: "admin_password"
         access_management: 1
       readonly_user:
         password_secret:
-          name: "clickhouse_users"
+          name: "clickhouse-users"
           key: "readonly_password"
         profile: "readonly"
       backup_user:
         password_secret:
-          name: "clickhouse_users"
+          name: "clickhouse-users"
           key: "backup_password"
         databases:
           - moo

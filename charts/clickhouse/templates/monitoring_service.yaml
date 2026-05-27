@@ -34,7 +34,7 @@ spec:
       targetPort: 8888
 {{- end }}
 ---
-{{- if .Values.config.backups.monitoring.enabled }}
+{{- if and .Values.config.backups.enabled .Values.config.backups.monitoring.enabled }}
 apiVersion: v1
 kind: Service
 metadata:

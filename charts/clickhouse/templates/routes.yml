@@ -1,41 +1,39 @@
-{{- if .Values.config.tls.routes }}
+{{- if and .Values.config.tls.enabled .Values.config.tls.routes }}
 # TLSRoute for native ClickHouse protocol (port 9440 - Passthrough)
 apiVersion: gateway.networking.k8s.io/{{ .Values.config.tls.route_api_version }}
 kind: TLSRoute
 metadata:
   name: clickhouse-tcp-secure
-  namespace: clickhouse
+  namespace: {{ .Values.namespace }}
 spec:
   parentRefs:
-    - name: external-http
-      sectionName: clickhouse-secure
+    - name: {{ .Values.config.tls.gateway.name | default "external-http" }}
+      sectionName: {{ .Values.config.tls.gateway.tcp_section | default "clickhouse-secure" }}
   hostnames:
-{{- range  $domain := .Values.config.domains  }}
+{{- range $domain := .Values.config.domains }}
     - {{ $domain }}
 {{- end }}
   rules:
     - backendRefs:
-        - name: clickhouse-ch-cluster
+        - name: clickhouse-{{ .Values.config.ch.installation_name }}
           port: 9440
-#
 ---
 apiVersion: gateway.networking.k8s.io/{{ .Values.config.tls.route_api_version }}
 kind: TLSRoute
 metadata:
   name: clickhouse-https-web
-  namespace: clickhouse
+  namespace: {{ .Values.namespace }}
 spec:
   parentRefs:
-    - name: external-http
-      sectionName: ssl-validation
+    - name: {{ .Values.config.tls.gateway.name | default "external-http" }}
+      sectionName: {{ .Values.config.tls.gateway.https_section | default "ssl-validation" }}
   hostnames:
-{{- range  $domain := .Values.config.domains  }}
+{{- range $domain := .Values.config.domains }}
     - {{ $domain }}
 {{- end }}
   rules:
     - backendRefs:
-        - name: clickhouse-ch-cluster
+        - name: clickhouse-{{ .Values.config.ch.installation_name }}
           port: 8443
 ---
-
 {{- end }}

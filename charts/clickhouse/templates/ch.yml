@@ -57,11 +57,8 @@ spec:
     profiles:
       {{- if .Values.config.ch.profiles}}
       {{- range $profileName, $profile := .Values.config.ch.profiles }}
-      {{- if $profile.readonly }}
-      {{ $profileName }}/readonly: {{ $profile.readonly | quote }}
-      {{- end }}
-      {{- if $profile.max_memory_usage }}
-      {{ $profileName }}/max_memory_usage: {{ $profile.max_memory_usage | quote }}
+      {{- range $key, $val := $profile }}
+      {{ $profileName }}/{{ $key }}: {{ $val | quote }}
       {{- end }}
       {{- end }}
       {{- else }}
@@ -113,7 +110,7 @@ spec:
 {{- end }}
   defaults:
     storageManagement:
-      reclaimPolicy: {{ .Values.config.chk.storage_policy | default "Retain"}}
+      reclaimPolicy: {{ .Values.config.ch.storage_policy | default "Retain"}}
     templates:
       podTemplate: clickhouse-pod-template
       dataVolumeClaimTemplate: data-volume
