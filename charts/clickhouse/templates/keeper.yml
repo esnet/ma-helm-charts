@@ -71,7 +71,7 @@ spec:
 {{- end}}
           containers:
             - name: clickhouse-keeper
-              imagePullPolicy: IfNotPresent
+              imagePullPolicy: {{ .Values.config.imagePullPolicy | default "IfNotPresent" }}
               image: "clickhouse/clickhouse-keeper:{{ .Values.config.clickhouse_version }}"
               resources:
                 requests:

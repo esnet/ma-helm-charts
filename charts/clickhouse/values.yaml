@@ -15,6 +15,9 @@ config:
       https_section: ssl-validation
   ## Clickhouse image tag to use
   clickhouse_version: 25.9
+  ## Image pull policy applied to all containers (clickhouse, clickhouse-keeper, clickhouse-backup).
+  ## IfNotPresent is appropriate for pinned version tags. Use Always during development or with floating tags.
+  imagePullPolicy: IfNotPresent
   ## Used when configuring a tlsroute, feel free to ignore if you're not using the feature
   domains:
     - localhost.nip.io

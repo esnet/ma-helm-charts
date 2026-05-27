@@ -198,7 +198,7 @@ spec:
 {{- if .Values.config.backups.enabled }}
             - name: clickhouse-backup
               image: altinity/clickhouse-backup:{{ .Values.config.backups.version }}
-              imagePullPolicy: Always
+              imagePullPolicy: {{ .Values.config.imagePullPolicy | default "IfNotPresent" }}
               args:
                 - "server"
                 - "--watch"
@@ -251,6 +251,7 @@ spec:
 
             - name: clickhouse
               image: clickhouse/clickhouse-server:{{ .Values.config.clickhouse_version }}
+              imagePullPolicy: {{ .Values.config.imagePullPolicy | default "IfNotPresent" }}
               resources:
                 requests:
                   memory: "{{ .Values.config.ch.resources.requests.memory }}"
