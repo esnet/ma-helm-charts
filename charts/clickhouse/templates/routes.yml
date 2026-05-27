@@ -5,6 +5,8 @@ kind: TLSRoute
 metadata:
   name: clickhouse-tcp-secure
   namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "clickhouse.labels" . | nindent 4 }}
 spec:
   parentRefs:
     - name: {{ .Values.config.tls.gateway.name | default "external-http" }}
@@ -23,6 +25,8 @@ kind: TLSRoute
 metadata:
   name: clickhouse-https-web
   namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "clickhouse.labels" . | nindent 4 }}
 spec:
   parentRefs:
     - name: {{ .Values.config.tls.gateway.name | default "external-http" }}

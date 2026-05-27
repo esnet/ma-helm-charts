@@ -5,6 +5,7 @@ metadata:
   name: keeper-metrics
   namespace: {{ .Values.namespace }}
   labels:
+    {{- include "clickhouse.labels" . | nindent 4 }}
     clickhouse-keeper.altinity.com/chk: {{ .Values.config.chk.name }}
 spec:
   clusterIP: None
@@ -23,6 +24,7 @@ metadata:
   name: ch-metrics
   namespace: {{ .Values.namespace }}
   labels:
+    {{- include "clickhouse.labels" . | nindent 4 }}
     clickhouse.altinity.com/chi: {{ .Values.config.ch.installation_name }}
 spec:
   clusterIP: None
@@ -41,6 +43,7 @@ metadata:
   name: ch-backups-metrics
   namespace: {{ .Values.namespace }}
   labels:
+    {{- include "clickhouse.labels" . | nindent 4 }}
     clickhouse.altinity.com/chi: {{ .Values.config.ch.installation_name }}
 spec:
   clusterIP: None

@@ -4,6 +4,8 @@ kind: "ClickHouseInstallation"
 metadata:
   name: {{ .Values.config.ch.installation_name }}
   namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "clickhouse.labels" . | nindent 4 }}
 spec:
   configuration:
     zookeeper:

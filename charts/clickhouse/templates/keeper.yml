@@ -5,6 +5,8 @@ kind: "ClickHouseKeeperInstallation"
 metadata:
   name: {{ .Values.config.chk.name }}
   namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "clickhouse.labels" . | nindent 4 }}
 spec:
   configuration:
     clusters:
