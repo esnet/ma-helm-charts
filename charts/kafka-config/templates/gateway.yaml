@@ -4,7 +4,7 @@
 {{- range $name, $listener := .Values.config.kafka.listeners }}
 {{- if $listener.gateway }}
 ---
-apiVersion: gateway.networking.k8s.io/v1alpha2
+apiVersion: gateway.networking.k8s.io/{{ $.Values.config.crd_version }}
 kind: TLSRoute
 metadata:
   name: {{ $.Values.config.kafka.clusterName }}-{{ $name }}

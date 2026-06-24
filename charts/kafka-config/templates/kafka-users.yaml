@@ -1,6 +1,6 @@
 {{- range $key, $user := .Values.config.users }}
 ---
-apiVersion: kafka.strimzi.io/v1beta2
+apiVersion: kafka.strimzi.io/{{ $.Values.config.operator.crd_version }}
 kind: KafkaUser
 metadata:
   name: {{ $user.name }}

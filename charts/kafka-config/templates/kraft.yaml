@@ -1,5 +1,5 @@
 ---
-apiVersion: kafka.strimzi.io/v1beta2
+apiVersion: kafka.strimzi.io/{{ $.Values.config.operator.crd_version }}
 kind: KafkaNodePool
 metadata:
   name: controller
@@ -50,7 +50,7 @@ spec:
   roles:
     - controller
 ---
-apiVersion: kafka.strimzi.io/v1beta2
+apiVersion: kafka.strimzi.io/{{ $.Values.config.operator.crd_version }}
 kind: KafkaNodePool
 metadata:
   name: {{ .Values.config.kafka.brokerPoolName }}

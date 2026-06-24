@@ -1,4 +1,4 @@
-apiVersion: kafka.strimzi.io/v1beta2
+apiVersion: kafka.strimzi.io/{{ $.Values.config.operator.crd_version }}
 kind: Kafka
 metadata:
   name: {{ .Values.config.kafka.clusterName }}

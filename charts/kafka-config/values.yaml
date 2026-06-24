@@ -5,6 +5,9 @@ config:
   # This section configures the main `Kafka` custom resource managed by the
   # Strimzi operator, as well as the broker `KafkaNodePool`. The controller
   # (KRaft) node pool is configured separately under `keeper` below.
+  operator:
+    crd_version: v1alpha2
+
   kafka:
     # Name of the Kafka CR. All dependent resources (topics, users, TLSRoutes)
     # reference this name via the `strimzi.io/cluster` label.

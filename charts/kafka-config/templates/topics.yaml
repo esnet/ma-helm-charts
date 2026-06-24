@@ -1,6 +1,6 @@
 {{- range .Values.config.topics }}
 ---
-apiVersion: kafka.strimzi.io/v1beta2
+apiVersion: kafka.strimzi.io/{{ $.Values.config.operator.crd_version }}
 kind: KafkaTopic
 metadata:
   name: topic-{{ .name | replace "_" "-" }}
