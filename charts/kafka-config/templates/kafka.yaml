@@ -1,4 +1,4 @@
-apiVersion: kafka.strimzi.io/{{ $.Values.config.operator.crd_version }}
+apiVersion: kafka.strimzi.io/v1
 kind: Kafka
 metadata:
   name: {{ .Values.config.kafka.clusterName }}
@@ -61,25 +61,6 @@ spec:
       {{- range $key, $value := .Values.config.kafka.config }}
       {{ $key }}: {{ $value }}
       {{- end }}
-    resources:
-      limits:
-        cpu: {{ .Values.config.kafka.resources.limits.cpu | quote }}
-        memory: {{ .Values.config.kafka.resources.limits.memory }}
-      requests:
-        cpu: {{ .Values.config.kafka.resources.requests.cpu | quote }}
-        memory: {{ .Values.config.kafka.resources.requests.memory }}
-    storage:
-      type: jbod
-      volumes:
-        {{- range .Values.config.kafka.storage.volumes }}
-        - id: {{ .id }}
-          type: {{ .type }}
-          size: {{ .size }}
-          {{- if .kraftMetadata }}
-          kraftMetadata: {{ .kraftMetadata }}
-          {{- end }}
-          deleteClaim: {{ .deleteClaim }}
-        {{- end }}
   {{- if .Values.config.kafka.jmx.enabled }}
   jmxOptions: {}
   {{- end }}

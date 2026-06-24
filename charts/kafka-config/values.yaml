@@ -5,8 +5,6 @@ config:
   # This section configures the main `Kafka` custom resource managed by the
   # Strimzi operator, as well as the broker `KafkaNodePool`. The controller
   # (KRaft) node pool is configured separately under `keeper` below.
-  operator:
-    crd_version: v1alpha2
 
   kafka:
     # Name of the Kafka CR. All dependent resources (topics, users, TLSRoutes)
@@ -14,49 +12,15 @@ config:
     clusterName: kafka-cluster
 
     # Kafka version to deploy. Defaults to Chart.AppVersion if omitted.
-    version: "3.9.0"
-
-    # Number of broker pods in the broker KafkaNodePool (kraft.yaml).
-    replicas: 3
+    version: "4.1.0"
 
     # Name of the broker KafkaNodePool resource (kraft.yaml).
-    brokerPoolName: kafka
 
     # JMX — Java Management Extensions metrics export.
     # When enabled, Strimzi attaches a JMX exporter sidecar to each broker
     # pod so that tools like Prometheus can scrape Kafka metrics.
     jmx:
       enabled: false
-
-    # CPU / memory for broker pods.
-    resources:
-      limits:
-        cpu: "4"
-        memory: 34Gi
-      requests:
-        cpu: "2"
-        memory: 32Gi
-
-    # Persistent storage volumes attached to each broker pod (JBOD layout).
-    # Multiple volumes can be listed; each gets a unique `id`.
-    #
-    # Fields:
-    #   id            — Numeric volume ID. Must be stable; changing it
-    #                   forces a rolling replacement of the pods.
-    #   type          — `persistent-claim` (PVC) or `ephemeral`.
-    #   size          — PVC capacity (e.g. "2500Gi").
-    #   kraftMetadata — Set to `shared` on the volume that should store KRaft
-    #                   metadata (only one volume per pool needs this).
-    #   deleteClaim   — Whether Strimzi should delete the PVC when the pod is
-    #                   removed. Set to `false` to preserve data across pod
-    #                   recreation.
-    storage:
-      volumes:
-        - id: 0
-          type: persistent-claim
-          size: 2500Gi
-          kraftMetadata: shared
-          deleteClaim: false
 
     # Kafka broker configuration properties forwarded verbatim to
     # `spec.kafka.config` in the Kafka CR.
@@ -192,35 +156,66 @@ config:
   # topic partition assignments, etc.). They do NOT serve producer/consumer
   # traffic. Anti-affinity rules ensure one controller per node.
   keeper:
-    # Number of controller pods. Must be an odd number (1, 3, 5…) so that
-    # a quorum majority can always be reached. 3 is the recommended minimum
-    # for production — tolerates one controller failure.
-    replicas: 3
+    broker:
+      name: kafka
+      # CPU / memory for broker pods.
+      resources:
+        limits:
+          cpu: "4"
+          memory: 34Gi
+        requests:
+          cpu: "2"
+          memory: 32Gi
 
-    # How long (seconds) Kubernetes waits for a controller pod to finish
-    # in-flight work before forcibly killing it during a rolling update or
-    # node drain. Increase if controller shutdown logs show truncated commits.
-    terminationGracePeriodSeconds: 30
+      # Persistent storage volumes attached to each broker pod (JBOD layout).
+      # Multiple volumes can be listed; each gets a unique `id`.
+      #
+      # Fields:
+      #   id            — Numeric volume ID. Must be stable; changing it
+      #                   forces a rolling replacement of the pods.
+      #   type          — `persistent-claim` (PVC) or `ephemeral`.
+      #   size          — PVC capacity (e.g. "2500Gi").
+      #   kraftMetadata — Set to `shared` on the volume that should store KRaft
+      #                   metadata (only one volume per pool needs this).
+      #   deleteClaim   — Whether Strimzi should delete the PVC when the pod is
+      #                   removed. Set to `false` to preserve data across pod
+      #                   recreation.
+      storage:
+        volumes:
+          - id: 0
+            type: persistent-claim
+            size: 2500Gi
+            kraftMetadata: shared
+            deleteClaim: false
 
-    # CPU / memory for controller pods. Controllers are metadata-only so they
-    # need far less memory than brokers.
-    resources:
-      limits:
-        cpu: "2"
-        memory: 3Gi
-      requests:
-        cpu: "1"
-        memory: 2Gi
+    controller:
+      # Number of controller pods. Must be an odd number (1, 3, 5…) so that
+      # a quorum majority can always be reached. 3 is the recommended minimum
+      # for production — tolerates one controller failure.
+      replicas: 3
+      # How long (seconds) Kubernetes waits for a controller pod to finish
+      # in-flight work before forcibly killing it during a rolling update or
+      # node drain. Increase if controller shutdown logs show truncated commits.
+      terminationGracePeriodSeconds: 30
 
-    # Persistent storage for KRaft metadata logs. See kafka.storage.volumes
-    # for field descriptions. Controllers only need a single small volume.
-    storage:
-      volumes:
-        - id: 0
-          type: persistent-claim
-          size: 100Gi
-          kraftMetadata: shared
-          deleteClaim: false
+      # Persistent storage for KRaft metadata logs. See kafka.storage.volumes
+      # for field descriptions. Controllers only need a single small volume.
+      storage:
+        volumes:
+          - id: 0
+            type: persistent-claim
+            size: 100Gi
+            kraftMetadata: shared
+            deleteClaim: false
+      # CPU / memory for controller pods. Controllers are metadata-only so they
+      # need far less memory than brokers.
+      resources:
+        limits:
+          cpu: "2"
+          memory: 3Gi
+        requests:
+          cpu: "1"
+          memory: 2Gi
 
   # ---------------------------------------------------------------------------
   # storageClasses — GCE StorageClass resources (renders storage-class.yaml)
@@ -284,11 +279,11 @@ config:
   #   retention   — How long (milliseconds) Kafka retains messages before
   #                 deleting them. 604800000 = 7 days.
   topics:
-    firefly:
-      name: stardust_firefly
-      partitions: 3
-      replicas: 3
-      retention: 604800000
+  #  firefly:
+  #    name: stardust_firefly
+  #    partitions: 3
+  #    replicas: 3
+  #    retention: 604800000
 
   # ---------------------------------------------------------------------------
   # users — KafkaUser resources (renders kafka-users.yaml)
@@ -330,10 +325,10 @@ config:
   #                     values: `Read`, `Write`, `Describe`, `DescribeConfigs`,
   #                     `Create`, `Delete`, `Alter`, `All`.
   users:
-    admin:
-      name: admin-user
-      authType: scram-sha-512
-      superUser: true
+    # admin:
+    #   name: admin-user
+    #   authType: scram-sha-512
+    #   superUser: true
     # sd:
     #   name: sd-user
     #   authType: scram-sha-512

@@ -1,5 +1,5 @@
 ---
-apiVersion: kafka.strimzi.io/{{ $.Values.config.operator.crd_version }}
+apiVersion: kafka.strimzi.io/v1
 kind: KafkaNodePool
 metadata:
   name: controller
@@ -7,11 +7,11 @@ metadata:
     strimzi.io/cluster: {{ .Values.config.kafka.clusterName }}
     {{- include "kafka.componentLabels" (list . "controller") | nindent 4 }}
 spec:
-  replicas: {{ .Values.config.keeper.replicas }}
+  replicas: {{ .Values.config.keeper.controller.replicas }}
   storage:
     type: jbod
     volumes:
-      {{- range .Values.config.keeper.storage.volumes }}
+      {{- range .Values.config.keeper.controller.storage.volumes }}
       - id: {{ .id }}
         type: {{ .type }}
         size: {{ .size }}
@@ -22,14 +22,14 @@ spec:
       {{- end }}
   resources:
     limits:
-      cpu: {{ .Values.config.keeper.resources.limits.cpu | quote }}
-      memory: {{ .Values.config.keeper.resources.limits.memory }}
+      cpu: {{ .Values.config.keeper.controller.resources.limits.cpu | quote }}
+      memory: {{ .Values.config.keeper.controller.resources.limits.memory }}
     requests:
-      cpu: {{ .Values.config.keeper.resources.requests.cpu | quote }}
-      memory: {{ .Values.config.keeper.resources.requests.memory }}
+      cpu: {{ .Values.config.keeper.controller.resources.requests.cpu | quote }}
+      memory: {{ .Values.config.keeper.controller.resources.requests.memory }}
   template:
     pod:
-      terminationGracePeriodSeconds: {{ .Values.config.keeper.terminationGracePeriodSeconds }}
+      terminationGracePeriodSeconds: {{ .Values.config.keeper.controller.terminationGracePeriodSeconds }}
       topologySpreadConstraints:
         - maxSkew: 1
           topologyKey: zone
@@ -51,21 +51,28 @@ spec:
   roles:
     - controller
 ---
-apiVersion: kafka.strimzi.io/{{ $.Values.config.operator.crd_version }}
+apiVersion: kafka.strimzi.io/v1
 kind: KafkaNodePool
 metadata:
-  name: {{ .Values.config.kafka.brokerPoolName }}
+  name: {{ .Values.config.keeper.broker.name }}
   labels:
     strimzi.io/cluster: {{ .Values.config.kafka.clusterName }}
     {{- include "kafka.componentLabels" (list . "broker") | nindent 4 }}
 spec:
   roles:
     - broker
-  replicas: {{ .Values.config.kafka.replicas }}
+  replicas: {{ .Values.config.keeper.broker.replicas }}
+  resources:
+    limits:
+      cpu: {{ .Values.config.keeper.broker.resources.limits.cpu | quote }}
+      memory: {{ .Values.config.keeper.broker.resources.limits.memory }}
+    requests:
+      cpu: {{ .Values.config.keeper.broker.resources.requests.cpu | quote }}
+      memory: {{ .Values.config.keeper.broker.resources.requests.memory }}
   storage:
     type: jbod
     volumes:
-      {{- range .Values.config.kafka.storage.volumes }}
+      {{- range .Values.config.keeper.broker.storage.volumes }}
       - id: {{ .id }}
         type: {{ .type }}
         size: {{ .size }}
