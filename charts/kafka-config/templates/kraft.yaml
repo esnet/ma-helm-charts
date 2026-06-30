@@ -36,7 +36,8 @@ spec:
           whenUnsatisfiable: ScheduleAnyway
           labelSelector:
             matchLabels:
-              strimzi.io/component-type: controller
+              strimzi.io/cluster: {{ .Values.config.kafka.clusterName }}
+              app.kubernetes.io/component: controller
       affinity:
         podAntiAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
@@ -73,3 +74,23 @@ spec:
         {{- end }}
         deleteClaim: {{ .deleteClaim }}
       {{- end }}
+  template:
+    pod:
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: zone
+          whenUnsatisfiable: ScheduleAnyway
+          labelSelector:
+            matchLabels:
+              strimzi.io/cluster: {{ .Values.config.kafka.clusterName }}
+              app.kubernetes.io/component: broker
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchExpressions:
+                  - key: strimzi.io/controller-name
+                    operator: In
+                    values:
+                      - {{ .Values.config.kafka.clusterName }}-{{ .Values.config.kafka.brokerPoolName }}
+              topologyKey: "kubernetes.io/hostname"
