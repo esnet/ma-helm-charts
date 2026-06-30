@@ -1,0 +1,22 @@
+# Note: This chart assumes an Envoy Gateway already exists in the cluster.
+# The Gateway resource should be provisioned separately (e.g. via its own Helm chart or infra tooling).
+# This template only creates the TLSRoutes that attach to it.
+{{- range $name, $listener := .Values.config.kafka.listeners }}
+{{- if $listener.gateway }}
+---
+apiVersion: gateway.networking.k8s.io/{{ $.Values.config.crd_version }}
+kind: TLSRoute
+metadata:
+  name: {{ $.Values.config.kafka.clusterName }}-{{ $name }}
+  labels:
+    {{- include "kafka.componentLabels" (list $ "gateway") | nindent 4 }}
+spec:
+  parentRefs:
+    - name: {{ $listener.gateway.name }}
+      sectionName: {{ $listener.gateway.sectionName | default $name }}
+  rules:
+    - backendRefs:
+        - name: {{ $.Values.config.kafka.clusterName }}-kafka-{{ $name }}-bootstrap
+          port: {{ $listener.port }}
+{{- end }}
+{{- end }}

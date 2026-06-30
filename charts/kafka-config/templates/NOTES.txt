@@ -1,0 +1,42 @@
+Kafka Chart — Secret Requirements
+==================================
+
+This chart supports two authentication types for KafkaUsers: scram-sha-512 and tls.
+No Kubernetes Secrets or ExternalSecrets are created by this chart — all secrets
+must exist in the cluster before deployment.
+
+SCRAM-SHA-512 Users
+-------------------
+Strimzi reads the password via the secretKeyRef defined in the KafkaUser spec.
+A single Kubernetes Secret can hold all user passwords, keyed by convention:
+
+  Secret name : <any name, referenced in secretKeyRef>
+  Key per user: <user.name>_password
+
+Passwords are expected in Kubernetes Secret "{{ .Values.config.secretRef.name }}"
+under a matching key per user.
+
+Users configured with scram-sha-512:
+{{- range $key, $user := .Values.config.users }}
+{{- if eq $user.authType "scram-sha-512" }}
+  - {{ $user.name }} (secretKeyRef key: {{ $user.name }}_password)
+{{- end }}
+{{- end }}
+
+TLS (Strimzi-managed) Users
+----------------------------
+No secrets required prior to deployment. Strimzi generates the certificate,
+signs it with its internal CA, and stores the result in a secret named after
+the KafkaUser containing user.crt, user.key, and user.p12. The client
+application reads from that secret to establish mutual TLS.
+
+Users configured with tls:
+{{- range $key, $user := .Values.config.users }}
+{{- if eq $user.authType "tls" }}
+  - {{ $user.name }} (secret auto-created by Strimzi as "{{ $user.name }}")
+{{- end }}
+{{- end }}
+
+Note: tls-external is not supported by this chart. For externally managed
+certificates, use authType: tls and allow Strimzi to manage the cert lifecycle,
+or raise a request to extend the chart.

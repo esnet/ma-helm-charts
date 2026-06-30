@@ -1,0 +1,8 @@
+apiVersion: v2
+name: kafka-config
+description: Kafka Configuration
+version: 0.0.1
+appVersion: "3.9.0"
+maintainers:
+  - name: esnet
+    email: "esnet-seg-ma@lbl.gov"
