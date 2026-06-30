@@ -1,5 +1,24 @@
-⚠ ClickHouse Operator was not installed. Please make sure to install it from https://helm.altinity.com
+⚠ WARNING: The Altinity ClickHouse Operator must be installed before this chart
+  will function. Install it from https://helm.altinity.com
 
-⚠ Please not, that altinity opertor needs to be installed first.
+ClickHouse installation "{{ .Values.config.ch.installation_name }}" deployed in namespace "{{ .Values.namespace }}".
 
-ClickHouse cluster "{{ .Release.Name }}" has been deployed!
+  Clusters:
+{{- range $clusterName, $_ := .Values.config.ch.clusters }}
+    - {{ $clusterName }}
+{{- end }}
+
+  Service:   clickhouse-{{ .Values.config.ch.installation_name }}.{{ .Values.namespace }}.svc.cluster.local
+  HTTP:      port 8123
+  Native TCP: port 9000
+{{- if .Values.config.tls.enabled }}
+  HTTPS:     port 8443
+  TCP/TLS:   port 9440
+{{- end }}
+{{- if and .Values.config.tls.enabled .Values.config.tls.routes }}
+
+  TLSRoutes configured for:
+{{- range $domain := .Values.config.domains }}
+    - {{ $domain }}
+{{- end }}
+{{- end }}
