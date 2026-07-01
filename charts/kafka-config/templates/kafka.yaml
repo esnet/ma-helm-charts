@@ -61,9 +61,20 @@ spec:
       {{- range $key, $value := .Values.config.kafka.config }}
       {{ $key }}: {{ $value }}
       {{- end }}
-  {{- if .Values.config.kafka.jmx.enabled }}
-  jmxOptions: {}
-  {{- end }}
+    {{- if .Values.config.kafka.jmxOptions.enabled }}
+    jmxOptions: {}
+    {{- end }}
+    {{- if .Values.config.kafka.metrics.enabled }}
+    metricsConfig:
+      type: strimziMetricsReporter
+      {{- if .Values.config.kafka.metrics.allowList }}
+      values:
+        allowList:
+          {{- range .Values.config.kafka.metrics.allowList }}
+          - {{ . | quote }}
+          {{- end }}
+      {{- end }}
+    {{- end }}
   entityOperator:
     topicOperator: {}
     userOperator: {}

@@ -16,11 +16,26 @@ config:
 
     # Name of the broker KafkaNodePool resource (kraft.yaml).
 
-    # JMX — Java Management Extensions metrics export.
-    # When enabled, Strimzi attaches a JMX exporter sidecar to each broker
-    # pod so that tools like Prometheus can scrape Kafka metrics.
-    jmx:
+    # JMX — raw JMX/RMI access (e.g. for jconsole or VisualVM). This is
+    # independent of the Prometheus metrics export configured below; it does
+    # not expose a Prometheus endpoint on its own.
+    jmxOptions:
       enabled: false
+
+    # Prometheus metrics export via Strimzi Metrics Reporter — a native Kafka
+    # `MetricsReporter` plugin that exposes metrics directly in Prometheus
+    # format (default port 8080), with no JMX bridge, javaagent, or sidecar
+    # required. See: https://strimzi.io/blog/2025/10/06/strimzi-metrics-reporter/
+    #
+    # `metricsConfig` is a cluster-wide Kafka CR setting, so enabling this
+    # applies to every Kafka process pod regardless of role — both the
+    # broker node pool and the KRaft controller node pool.
+    metrics:
+      enabled: false
+      # Regex allowlist of metric names to export. Leave empty to fall back
+      # to Strimzi's "sensible default" set; use ["\".*\""] to export every
+      # metric the reporter makes available.
+      allowList: []
 
     # Kafka broker configuration properties forwarded verbatim to
     # `spec.kafka.config` in the Kafka CR.
@@ -157,6 +172,7 @@ config:
   # traffic. Anti-affinity rules ensure one controller per node.
   keeper:
     broker:
+      replicas: 3
       name: kafka
       # CPU / memory for broker pods.
       resources:
