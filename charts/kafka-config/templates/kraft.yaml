@@ -37,13 +37,13 @@ spec:
           labelSelector:
             matchLabels:
               strimzi.io/cluster: {{ .Values.config.kafka.clusterName }}
-              app.kubernetes.io/component: controller
+              strimzi.io/pool-name: controller
       affinity:
         podAntiAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
             - labelSelector:
                 matchExpressions:
-                  - key: strimzi.io/controller-name
+                  - key: strimzi.io/name
                     operator: In
                     values:
                       - {{ .Values.config.kafka.clusterName }}-controller
@@ -90,14 +90,14 @@ spec:
           labelSelector:
             matchLabels:
               strimzi.io/cluster: {{ .Values.config.kafka.clusterName }}
-              app.kubernetes.io/component: broker
+              strimzi.io/pool-name: {{ .Values.config.keeper.broker.name }}
       affinity:
         podAntiAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
             - labelSelector:
                 matchExpressions:
-                  - key: strimzi.io/controller-name
+                  - key: strimzi.io/name
                     operator: In
                     values:
-                      - {{ .Values.config.kafka.clusterName }}-{{ .Values.config.kafka.brokerPoolName }}
+                      - {{ .Values.config.kafka.clusterName }}-{{ .Values.config.keeper.broker.name }}
               topologyKey: "kubernetes.io/hostname"
