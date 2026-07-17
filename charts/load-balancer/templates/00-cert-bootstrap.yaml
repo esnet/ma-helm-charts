@@ -1,4 +1,4 @@
-{{- $bootstrapImage := .Values.config.gateway.bootstrap.image | default "alpine:3" }}
+{{- $bootstrapImage := .Values.config.gateway.bootstrap.image | default "alpine/k8s:1.36.2" }}
 ---
 # Bootstrap ServiceAccount – runs as an ArgoCD PreSync hook to break the
 # Envoy/GKE Gateway / cert-manager chicken-and-egg race condition.
@@ -28,7 +28,7 @@ metadata:
 rules:
   - apiGroups: [""]
     resources: ["secrets"]
-    verbs: ["get", "create"]
+    verbs: ["get", "create", "patch"]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
@@ -71,30 +71,19 @@ spec:
             - |
               set -e
 
-              # Install openssl (curl is included in alpine base)
-              apk add --no-cache openssl curl 2>/dev/null
-
               NAMESPACE="{{ .Values.config.namespace }}"
               SECRET_NAME="{{ .Values.config.certificate.name }}"
-              API_SERVER="https://kubernetes.default.svc"
-              TOKEN=$(cat /var/run/secrets/kubernetes.io/serviceaccount/token)
-              CA_CERT="/var/run/secrets/kubernetes.io/serviceaccount/ca.crt"
 
               echo "Checking if TLS Secret '${SECRET_NAME}' already exists..."
 
-              HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
-                --cacert "${CA_CERT}" \
-                -H "Authorization: Bearer ${TOKEN}" \
-                "${API_SERVER}/api/v1/namespaces/${NAMESPACE}/secrets/${SECRET_NAME}")
-
-              if [ "${HTTP_STATUS}" = "200" ]; then
-                echo "TLS Secret '${SECRET_NAME}' already exists – skipping bootstrap."
+              if kubectl get secret "${SECRET_NAME}" -n "${NAMESPACE}" > /dev/null 2>&1; then
+                echo "TLS Secret '${SECRET_NAME}' already exists - skipping bootstrap."
                 exit 0
               fi
 
-              echo "TLS Secret not found (HTTP ${HTTP_STATUS}). Generating self-signed bootstrap certificate..."
+              echo "TLS Secret not found. Generating self-signed bootstrap certificate..."
 
-              # Self-signed cert valid for 2 days – only needs to keep the GKE
+              # Self-signed cert valid for 2 days - only needs to keep the GKE
               # Gateway happy until cert-manager issues the real certificate.
               openssl req -x509 -newkey rsa:2048 \
                 -keyout /tmp/tls.key \
@@ -103,39 +92,16 @@ spec:
                 -nodes \
                 -subj "/CN={{ index .Values.config.domains 0 }}"
 
-              TLS_CRT=$(base64 -w0 /tmp/tls.crt)
-              TLS_KEY=$(base64 -w0 /tmp/tls.key)
+              echo "Creating bootstrap TLS Secret..."
 
-              echo "Creating bootstrap TLS Secret via Kubernetes API..."
+              kubectl create secret tls "${SECRET_NAME}" \
+                -n "${NAMESPACE}" \
+                --cert=/tmp/tls.crt \
+                --key=/tmp/tls.key
 
-              RESPONSE_STATUS=$(curl -s -o /tmp/response.json -w "%{http_code}" \
-                --cacert "${CA_CERT}" \
-                -X POST \
-                -H "Authorization: Bearer ${TOKEN}" \
-                -H "Content-Type: application/json" \
-                "${API_SERVER}/api/v1/namespaces/${NAMESPACE}/secrets" \
-                -d "{
-                  \"apiVersion\": \"v1\",
-                  \"kind\": \"Secret\",
-                  \"metadata\": {
-                    \"name\": \"${SECRET_NAME}\",
-                    \"namespace\": \"${NAMESPACE}\",
-                    \"annotations\": {
-                      \"cert-manager.io/bootstrap\": \"true\",
-                      \"cert-manager.io/certificate-name\": \"${SECRET_NAME}\"
-                    }
-                  },
-                  \"type\": \"kubernetes.io/tls\",
-                  \"data\": {
-                    \"tls.crt\": \"${TLS_CRT}\",
-                    \"tls.key\": \"${TLS_KEY}\"
-                  }
-                }")
+              kubectl annotate secret "${SECRET_NAME}" \
+                -n "${NAMESPACE}" \
+                cert-manager.io/bootstrap=true \
+                "cert-manager.io/certificate-name=${SECRET_NAME}"
 
-              if [ "${RESPONSE_STATUS}" = "201" ]; then
-                echo "Bootstrap TLS Secret '${SECRET_NAME}' created successfully."
-              else
-                echo "ERROR: Failed to create Secret. HTTP Status: ${RESPONSE_STATUS}"
-                cat /tmp/response.json
-                exit 1
-              fi
+              echo "Bootstrap TLS Secret '${SECRET_NAME}' created successfully."

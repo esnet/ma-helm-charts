@@ -33,9 +33,14 @@ config:
     ## the main sync so the GKE Gateway can provision without waiting for
     ## cert-manager to complete the ACME HTTP01 challenge.
     ## cert-manager will replace the Secret with the real cert once the Gateway
-    ## is live.  Override the image if your cluster cannot pull from Docker Hub.
+    ## is live.
+    ## The image must have kubectl and openssl pre-installed. k8s-cert-helper
+    ## is a fork of alpine/k8s with openssl added at build time. alpine:3 is
+    ## not suitable for gVisor clusters as apk cannot resolve external DNS
+    ## inside the gVisor sandbox.
+    ## Source: https://github.com/esnet-saas/supporting-containers
     bootstrap:
-      image: "alpine:3"
+      image: "us-central1-docker.pkg.dev/ma-infrastructure-474617/docker-registry/k8s-cert-helper:1.36.2"
     ## envoy
     proxy_name: external-http-proxy
     type: envoy
