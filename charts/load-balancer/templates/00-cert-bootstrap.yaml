@@ -99,6 +99,8 @@ spec:
                 --cert=/tmp/tls.crt \
                 --key=/tmp/tls.key
 
+              echo "Annotating bootstrap TLS Secret..."
+
               kubectl annotate secret "${SECRET_NAME}" \
                 -n "${NAMESPACE}" \
                 cert-manager.io/bootstrap=true \
