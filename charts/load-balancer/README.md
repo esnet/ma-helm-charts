@@ -92,7 +92,7 @@ default when only IPv4 is requested.
 | `config.gateway.ipv4.address` | — | Static IP address (regional for Envoy, global for GKE) |
 | `config.gateway.ipv6.enabled` | `true` | Enable IPv6 listener / DualStack |
 | `config.gateway.ipv6.address` | — | Static IPv6 address |
-| `config.gateway.bootstrap.image` | `alpine:3` | Image used by the GKE PreSync bootstrap Job |
+| `config.gateway.bootstrap.image` | `k8s-cert-helper:1.36.2` | Image used by the `cert-bootstrap` hook Job (must ship `kubectl` and `openssl`) |
 | `config.certificate.name` | `tls-cert` | Name of the TLS Secret cert-manager writes to |
 | `config.certificate.issuer` | `letsencrypt-prod` | cert-manager ClusterIssuer name |
 | `config.certificate.tlsPolicy.enabled` | `true` | Create a TLS cipher/version policy |
@@ -101,17 +101,25 @@ default when only IPv4 is requested.
 
 ---
 
-## ArgoCD sync-wave ordering
+## Install ordering (ArgoCD sync-wave / Helm hook-weight)
 
-When `config.argocd_annotation: true` the following sync-wave order is used:
+Under ArgoCD (`config.argocd_annotation: true`), the following sync-wave order
+is used. Under plain `helm install`/`helm upgrade`, the `cert-bootstrap`
+ServiceAccount/Role/RoleBinding/Job run as `pre-install`/`pre-upgrade` hooks
+with matching `helm.sh/hook-weight` values (`"1"` for the RBAC resources,
+`"2"` for the Job), so the RBAC is always created before the Job that depends
+on it; the remaining resources rely on Helm's default apply ordering, which
+this chart's template file-name prefixes (`00-`, `01-`, `02-`, `03-`, `05-`)
+are deliberately numbered to match.
 
-| Resource | Wave |
-|----------|------|
-| GKE: bootstrap Job (PreSync hook) | PreSync |
-| EnvoyProxy / GatewayClass | `-15` |
-| ClusterIssuer | `-15` |
-| Gateway | `-10` |
-| Certificate (cert-manager) | `0` |
+| Resource | ArgoCD wave | Helm hook-weight |
+|----------|-------------|-------------------|
+| `cert-bootstrap-sa` / `-role` / `-rb` | PreSync (wave `1`) | `1` (pre-install,pre-upgrade) |
+| `cert-bootstrap` Job | PreSync (wave `2`) | `2` (pre-install,pre-upgrade) |
+| EnvoyProxy / GatewayClass | `-15` | — (filename order) |
+| ClusterIssuer | `-15` | — (filename order) |
+| Gateway | `-10` | — (filename order) |
+| Certificate (cert-manager) | `0` | — (filename order) |
 
 The Certificate is intentionally deployed **after** the Gateway so the ACME
 HTTP01 solver can route the challenge through the live load balancer.
