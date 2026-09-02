@@ -5,6 +5,8 @@ kind: "ClickHouseKeeperInstallation"
 metadata:
   name: {{ .Values.config.chk.name }}
   namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "clickhouse.labels" . | nindent 4 }}
 spec:
   configuration:
     clusters:
@@ -69,7 +71,7 @@ spec:
 {{- end}}
           containers:
             - name: clickhouse-keeper
-              imagePullPolicy: IfNotPresent
+              imagePullPolicy: {{ .Values.config.imagePullPolicy | default "IfNotPresent" }}
               image: "clickhouse/clickhouse-keeper:{{ .Values.config.clickhouse_version }}"
               resources:
                 requests:
