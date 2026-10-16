@@ -25,16 +25,43 @@ spec:
         {{- end }}
         {{- if $listener.configuration }}
         configuration:
-          {{- if $listener.configuration.staticIpNames }}
+          {{- if $listener.configuration.bootstrap }}
           bootstrap:
+            {{- if $listener.configuration.bootstrap.annotations }}
             annotations:
-              networking.gke.io/load-balancer-ip-addresses: {{ join "," $listener.configuration.staticIpNames }}
+              {{- range $k, $v := $listener.configuration.bootstrap.annotations }}
+              {{ $k }}: {{ $v | quote }}
+              {{- end }}
+            {{- end }}
           {{- end }}
+          {{- if $listener.configuration.ipFamilyPolicy }}
           ipFamilyPolicy: {{ $listener.configuration.ipFamilyPolicy }}
+          {{- end }}
+          {{- if $listener.configuration.ipFamilies }}
           ipFamilies:
             {{- range $listener.configuration.ipFamilies }}
             - {{ . }}
             {{- end }}
+          {{- end }}
+          {{- if $listener.configuration.brokerAnnotations }}
+          brokers:
+            {{- $start := $.Values.config.keeper.broker.nodeStartId | int }}
+            {{- $stop := add $start ($.Values.config.keeper.broker.replicas | int) | int }}
+            {{- $ips := $listener.configuration.brokerIpAddresses }}
+            {{- range $i, $id := untilStep $start $stop 1 }}
+            - broker: {{ $id }}
+              annotations:
+                {{- range $k, $v := $listener.configuration.brokerAnnotations }}
+                {{ $k }}: {{ $v | quote }}
+                {{- end }}
+                {{- if $ips }}
+                {{- $ip := index $ips $i }}
+                {{- if $ip }}
+                networking.gke.io/load-balancer-ip-addresses: {{ $ip | quote }}
+                {{- end }}
+                {{- end }}
+            {{- end }}
+          {{- end }}
         {{- end }}
       {{- end }}
     {{- $superUsers := list }}
