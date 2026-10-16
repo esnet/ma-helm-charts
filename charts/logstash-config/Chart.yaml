@@ -1,0 +1,7 @@
+apiVersion: v2
+name: logstash-config
+description: Generic ECK-managed Logstash pipeline deployment
+version: 0.0.1
+maintainers:
+  - name: esnet
+    email: "esnet-seg-ma@lbl.gov"

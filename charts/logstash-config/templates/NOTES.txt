@@ -1,0 +1,38 @@
+logstash-config Chart — Deployment Notes
+=========================================
+
+Release: {{ .Release.Name }}
+Namespace: {{ .Values.namespace }}
+
+Secret Requirements
+-------------------
+This chart does NOT create a Secret or ExternalSecret. A Secret named
+"{{ .Values.credentials.secretName }}" must already exist in namespace
+"{{ .Values.namespace }}" before this release syncs — provision it via an
+ExternalSecret (or equivalent) in the consuming overlay.
+
+Required keys in the Secret:
+  kafka_input_sasl_username   — Kafka SASL username
+  kafka_input_sasl_password   — Kafka SASL password
+  elastic_user                — Elasticsearch username
+  elastic_password            — Elasticsearch password
+
+Pipeline Load Order
+-------------------
+Logstash loads pipeline config files in lexicographic order by filename.
+This chart enforces a 3-digit zero-padded naming scheme:
+
+  {{ .Values.pipeline.prefix }}-001-inputs.conf     ← rendered by this chart (fixed slot)
+{{- range .Values.pipeline.transforms }}
+  {{ $.Values.pipeline.prefix }}-{{ include "logstash.pad3" .index }}-<transform>.conf  ← ConfigMap: {{ .configMap }}
+{{- end }}
+  {{ .Values.pipeline.prefix }}-999-outputs.conf    ← rendered by this chart (fixed slot)
+
+Transform ConfigMaps (indices 002–998) must be provided via extraResources in the
+overlay and listed under pipeline.transforms in values. Indices outside this range
+will cause a hard failure at render time.
+
+ECK Operator
+------------
+This chart requires the Elastic Cloud on Kubernetes (ECK) operator to be installed
+in the cluster (elastic-system namespace) before the Logstash CR can be reconciled.

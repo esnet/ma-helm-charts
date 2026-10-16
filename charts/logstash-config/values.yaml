@@ -1,0 +1,188 @@
+# Namespace to deploy into
+namespace: ""
+
+# Create the namespace as part of this chart
+create_ns: false
+
+# ECK operator schema version — sets spec.version on the Logstash CR, which the
+# ECK operator uses for version compatibility checks and upgrade orchestration.
+# Decoupled from image.tag so a custom or mirrored image can be used without
+# changing the version the operator sees.
+elasticVersion: "9.5.5"
+
+image:
+  # Full image repository path (no tag)
+  repository: docker.elastic.co/logstash/logstash
+  tag: "9.5.5"
+
+# Number of Logstash pod replicas
+replicas: 1
+
+resources:
+  requests:
+    memory: 4Gi
+    cpu: "2"
+  limits:
+    memory: 4Gi
+    cpu: "2"
+
+jvm:
+  # Java heap — xms and xmx should be equal and <= ~50% of resources.limits.memory
+  xms: 2g
+  xmx: 2g
+
+logstash:
+  workers: 4
+  batchSize: 125
+
+# Pipeline configuration
+pipeline:
+  # Short identifier for this pipeline — used as a prefix in ConfigMap keys and filenames.
+  # Example: "bmp" produces filenames like bmp-001-inputs.conf, bmp-999-outputs.conf
+  prefix: ""
+
+  # Pipeline-specific transform ConfigMaps (rendered via extraResources in the overlay).
+  # Each entry references a ConfigMap by name that must already exist (or be in extraResources).
+  # The index controls load order within the pipeline — must be an integer between 2 and 998.
+  # Use 3-digit zero-padded values in your ConfigMap keys: e.g. bmp-020-initial-format.conf
+  # The chart will hard-fail if any index is outside the valid range.
+  #
+  # Example:
+  # transforms:
+  #   - index: 20
+  #     configMap: bmp-initial-format
+  #   - index: 90
+  #     configMap: bmp-afi-safi
+  transforms: []
+
+# Elasticsearch output configuration
+elasticsearch:
+  # List of Elasticsearch host URLs
+  # Example:
+  # hosts:
+  #   - "https://host1:9200"
+  #   - "https://host2:9200"
+  hosts: []
+
+  # Elasticsearch index name
+  index: ""
+
+  # Path to the CA certificate inside the container
+  cacert: ""
+
+  # ssl_verification_mode: "none" disables hostname verification while still using TLS
+  sslVerificationMode: none
+
+# TLS certificate extraction via openssl s_client.
+# When enabled, an init container runs before Logstash starts and extracts
+# the full TLS certificate chain from the specified host:port into a shared
+# emptyDir volume. Produces both PEM and PKCS12 formats at
+# outputPath/certFileName.{pem,p12}. No Kubernetes API access required —
+# the cert is pulled directly from the TLS handshake over the network.
+#
+# host and port are required when enabled.
+tlsCertExtractor:
+  enabled: false
+  ## Image needs to at least have JRE and openssl available
+  image: "us-central1-docker.pkg.dev/ma-infrastructure-474617/docker-registry/k8s-cert-helper:1.37.1"
+  host: ""
+  port: 9095
+  outputPath: "/certs"
+  certFileName: "ca"   # produces ca.pem and ca.p12 on the shared volume
+  # PKCS12 store password. This file contains only the broker's public CA certificate —
+  # no private key material. The password is required by the Java KeyStore API but
+  # provides no real security (the cert is visible to anyone connecting to the broker).
+  # Must match kafka.ssl.truststorePassword.
+  pkcs12Password: "public-nosecret"
+
+  # Liveness probe that detects Strimzi CA rotation by comparing the
+  # fingerprint of the cert on disk against what the broker is currently
+  # serving. If they differ the pod restarts, triggering a fresh extraction.
+  # If the broker is unreachable the probe passes — only a confirmed cert
+  # mismatch causes a restart. Only meaningful when tlsCertExtractor.enabled.
+  livenessProbe:
+    enabled: true
+    initialDelaySeconds: 120
+    periodSeconds: 3600
+    timeoutSeconds: 10
+    failureThreshold: 1
+
+# Kafka input configuration
+kafka:
+  bootstrapServers: ""
+  topic: ""
+  # group_id for this consumer — should be unique per pipeline/environment
+  groupId: ""
+  autoOffsetReset: latest
+  consumerThreads: 1
+  maxPollRecords: 500
+  maxPollIntervalMs: 300000
+
+  # TLS truststore for SASL_SSL connections.
+  # logstash-input-kafka only supports PKCS12 (not PEM) for ssl_truststore_type.
+  # When tlsCertExtractor.enabled is true, the init container writes the cert
+  # to the shared volume and truststoreLocation should point there.
+  # These two blocks are independent — you can bring your own cert (e.g. via
+  # ExternalSecret + volumeMount) and only enable ssl without the extractor.
+  ssl:
+    enabled: false
+    truststoreLocation: "/certs/ca.p12"
+    truststoreType: "PKCS12"
+    # Must match tlsCertExtractor.pkcs12Password. Not a secret — the truststore contains
+    # only the broker's public CA certificate. Required by the Java KeyStore API.
+    truststorePassword: "public-nosecret"
+    # Set to "" to disable hostname verification (required when the broker
+    # cert's SAN does not match the address used to reach it, e.g. a bare IP).
+    endpointIdentificationAlgorithm: ""
+
+# Pod credentials.
+# This chart does NOT create a Secret or ExternalSecret — the named Secret
+# must already exist in the target namespace (e.g. via an ExternalSecret
+# managed in the consuming overlay). It is injected into the Logstash
+# container with envFrom.
+#
+# Required keys in the Secret:
+#   kafka_input_sasl_username   — Kafka SASL username
+#   kafka_input_sasl_password   — Kafka SASL password
+#   elastic_user                 — Elasticsearch username
+#   elastic_password             — Elasticsearch password
+credentials:
+  # Name of the pre-existing Secret to reference via envFrom.
+  secretName: ""
+
+# Monitoring sidecars. Exactly one backend should be enabled at a time.
+# Each backend injects a sidecar container into the Logstash pod and uses
+# the existing credentials.secretName Secret for its auth credentials.
+monitoring:
+  # Metricbeat sidecar — ships Logstash node/pipeline stats to Elasticsearch
+  # via the logstash xpack module (Stack Monitoring). Connects to the
+  # Logstash API at https://localhost:9600 (ECK enables TLS on the API by
+  # default). Credentials are read from credentials.secretName — the Secret
+  # must contain monitor_es_username and monitor_es_password keys.
+  metricbeat:
+    enabled: false
+    image: "docker.elastic.co/beats/metricbeat"
+    imageTag: "9.5.5"
+    # Monitoring Elasticsearch cluster URL (not the data-ingest cluster).
+    elasticsearchHost: "https://el.gc1.mgt.stardust.es.net:9200"
+    # Cluster/environment label written to orchestrator.cluster.name in every
+    # metricbeat document — use this to distinguish staging from prod in
+    # Kibana Stack Monitoring (e.g. "bmp-staging", "bmp-prod").
+    # Leave empty to omit the field.
+    clusterName: ""
+    # Poll interval for node + node_stats metricsets.
+    period: "10s"
+    resources:
+      limits:
+        memory: 500Mi
+      requests:
+        cpu: 250m
+        memory: 250Mi
+  # otel:
+  #   enabled: false   # future: OpenTelemetry collector sidecar
+
+# Arbitrary additional Kubernetes manifests.
+# Use this to provide pipeline-specific transform ConfigMaps that the
+# chart will mount into the Logstash pod and load via path.config
+# (see pipeline.transforms below).
+extraResources: []
