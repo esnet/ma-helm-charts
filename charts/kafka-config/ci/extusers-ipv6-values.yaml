@@ -57,6 +57,7 @@ config:
             kraftMetadata: shared
             deleteClaim: false
     controller:
+      name: controller
       replicas: 3
       terminationGracePeriodSeconds: 30
       resources:

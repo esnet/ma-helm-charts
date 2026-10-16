@@ -29,6 +29,15 @@ All notable changes to this project will be documented in this file.
    no broker IDs to maintain.
  - Updated `values.yaml` listener examples to reflect the new structure
    for IPv4, IPv6, and external TLS single-stack loadbalancer listeners.
+ - Fixed broker and controller pod anti-affinity rules using the wrong
+   label key. `strimzi.io/name` is cluster-scoped — Strimzi applies it
+   to all pods in the cluster (both controllers and brokers), causing
+   controllers to block broker scheduling and leaving brokers permanently
+   pending when controllers occupied all available nodes. Both pools now
+   use `strimzi.io/pool-name` (pool-scoped) so each pool's anti-affinity
+   only matches its own pods.
+ - Added regression test `anti-affinity-uses-pool-name` to prevent this
+   class of bug recurring.
 
 [0.0.2]
  - Fixed `jmxOptions` being rendered at the wrong nesting level (was a sibling

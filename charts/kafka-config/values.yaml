@@ -238,6 +238,7 @@ config:
             deleteClaim: false
 
     controller:
+      name: controller
       # Number of controller pods. Must be an odd number (1, 3, 5…) so that
       # a quorum majority can always be reached. 3 is the recommended minimum
       # for production — tolerates one controller failure.

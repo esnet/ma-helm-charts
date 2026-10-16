@@ -225,6 +225,64 @@ SCENARIOS: list[dict[str, Any]] = [
         # separate check: IP annotation must be absent from brokers
         "broker_ip_absent": ["extusers"],
     },
+    # ------------------------------------------------------------------
+    # Anti-affinity — pool-name label, not cluster-name label
+    # Regression test: strimzi.io/name is cluster-scoped (shared by both
+    # controllers and brokers), causing controllers to block broker
+    # scheduling. Must use strimzi.io/pool-name which is pool-scoped.
+    # ------------------------------------------------------------------
+    {
+        "name": "anti-affinity-uses-pool-name",
+        "values": "ci/minimal-values.yaml",
+        "present": ["KafkaNodePool"],
+        "absent": [],
+        "fields": [],
+        "pool_fields": [
+            (
+                "controller",
+                [
+                    "spec", "template", "pod", "affinity",
+                    "podAntiAffinity",
+                    "requiredDuringSchedulingIgnoredDuringExecution",
+                    0, "labelSelector", "matchExpressions", 0, "key",
+                ],
+                "strimzi.io/pool-name",
+            ),
+            (
+                "controller",
+                [
+                    "spec", "template", "pod", "affinity",
+                    "podAntiAffinity",
+                    "requiredDuringSchedulingIgnoredDuringExecution",
+                    0, "labelSelector", "matchExpressions", 0, "values",
+                ],
+                ["controller"],  # matches values.yaml keeper.controller.name
+            ),
+            (
+                "kafka",
+                [
+                    "spec", "template", "pod", "affinity",
+                    "podAntiAffinity",
+                    "requiredDuringSchedulingIgnoredDuringExecution",
+                    0, "labelSelector", "matchExpressions", 0, "key",
+                ],
+                "strimzi.io/pool-name",
+            ),
+            (
+                "kafka",
+                [
+                    "spec", "template", "pod", "affinity",
+                    "podAntiAffinity",
+                    "requiredDuringSchedulingIgnoredDuringExecution",
+                    0, "labelSelector", "matchExpressions", 0, "values",
+                ],
+                ["kafka"],
+            ),
+        ],
+        "listener_fields": [],
+        "listener_broker_count": [],
+        "broker_ids": [],
+    },
 ]
 
 
