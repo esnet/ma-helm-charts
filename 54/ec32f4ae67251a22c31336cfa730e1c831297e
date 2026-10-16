@@ -1,0 +1,26 @@
+.github/scripts/test-kafka-config.py
+  h_5c3111fc5355aa 1-429
+.github/workflows/linting.yml
+  h_5c3111fc5355aa 51-53
+charts/kafka-config/ci/broker-scaling-values.yaml
+  h_5c3111fc5355aa 1-77
+charts/kafka-config/ci/extusers-ipv4-values.yaml
+  h_5c3111fc5355aa 1-76
+charts/kafka-config/ci/extusers-ipv6-values.yaml
+  h_5c3111fc5355aa 1-76
+charts/kafka-config/ci/minimal-values.yaml
+  h_5c3111fc5355aa 1-55
+charts/kafka-config/ci/no-broker-ips-values.yaml
+  h_5c3111fc5355aa 1-72
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "54ec32f4ae67251a22c31336cfa730e1c831297e",
+  "prompts": {},
+  "humans": {
+    "h_5c3111fc5355aa": {
+      "author": "Samir Faci <samir@es.net>"
+    }
+  }
+}
