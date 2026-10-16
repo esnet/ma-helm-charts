@@ -1,0 +1,55 @@
+# Minimal internal-only cluster — no external listeners, no metrics, no JMX.
+# Validates that the base Kafka + KafkaNodePool resources render cleanly and
+# that broker node IDs default to the [100-199] range.
+config:
+  kafka:
+    clusterName: kafka-ci
+    listeners:
+      plain:
+        port: 9092
+        type: internal
+        tls: false
+      tls:
+        port: 9093
+        type: internal
+        tls: true
+        authentication:
+          type: tls
+  keeper:
+    broker:
+      replicas: 3
+      name: kafka
+      nodeIds: "[100-199]"
+      nodeStartId: 100
+      resources:
+        limits:
+          cpu: "4"
+          memory: 4Gi
+        requests:
+          cpu: "1"
+          memory: 2Gi
+      storage:
+        volumes:
+          - id: 0
+            type: persistent-claim
+            size: 10Gi
+            kraftMetadata: shared
+            deleteClaim: false
+    controller:
+      replicas: 3
+      terminationGracePeriodSeconds: 30
+      resources:
+        limits:
+          cpu: "2"
+          memory: 2Gi
+        requests:
+          cpu: "1"
+          memory: 1Gi
+      storage:
+        volumes:
+          - id: 0
+            type: persistent-claim
+            size: 10Gi
+            kraftMetadata: shared
+            deleteClaim: false
+namespace: kafka-ci
