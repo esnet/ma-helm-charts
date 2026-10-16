@@ -1,0 +1,78 @@
+# 4-replica broker cluster with an external IPv4 listener.
+# Validates that scaling replicas generates broker entries 100-103 (not 0-3),
+# and that all four receive the common brokerAnnotations automatically.
+config:
+  kafka:
+    clusterName: kafka-ci
+    listeners:
+      plain:
+        port: 9092
+        type: internal
+        tls: false
+      tls:
+        port: 9093
+        type: internal
+        tls: true
+        authentication:
+          type: tls
+      extusers:
+        port: 9095
+        type: loadbalancer
+        tls: true
+        authentication:
+          type: scram-sha-512
+          sasl: true
+        configuration:
+          ipFamilyPolicy: SingleStack
+          ipFamilies:
+            - IPv4
+          bootstrap:
+            annotations:
+              cloud.google.com/l4-rbs: enabled
+              networking.gke.io/load-balancer-ip-addresses: kafka-ci-bootstrap-ipv4
+          brokerAnnotations:
+            cloud.google.com/l4-rbs: enabled
+          brokerIpAddresses:
+            - kafka-ci-broker-100-ipv4
+            - kafka-ci-broker-101-ipv4
+            - kafka-ci-broker-102-ipv4
+            - kafka-ci-broker-103-ipv4
+  keeper:
+    broker:
+      replicas: 4
+      name: kafka
+      nodeIds: "[100-199]"
+      nodeStartId: 100
+      resources:
+        limits:
+          cpu: "4"
+          memory: 4Gi
+        requests:
+          cpu: "1"
+          memory: 2Gi
+      storage:
+        volumes:
+          - id: 0
+            type: persistent-claim
+            size: 10Gi
+            kraftMetadata: shared
+            deleteClaim: false
+    controller:
+      name: controller
+      replicas: 3
+      terminationGracePeriodSeconds: 30
+      resources:
+        limits:
+          cpu: "2"
+          memory: 2Gi
+        requests:
+          cpu: "1"
+          memory: 1Gi
+      storage:
+        volumes:
+          - id: 0
+            type: persistent-claim
+            size: 10Gi
+            kraftMetadata: shared
+            deleteClaim: false
+namespace: kafka-ci

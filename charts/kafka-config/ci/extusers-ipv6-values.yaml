@@ -1,0 +1,77 @@
+# External SCRAM-SHA-512 listener — IPv6 single-stack with GKE L4 RBS.
+# Validates that cloud.google.com/l4-rbs: enabled appears on both the
+# bootstrap and every broker entry, and that ipFamilies is IPv6.
+config:
+  kafka:
+    clusterName: kafka-ci
+    listeners:
+      plain:
+        port: 9092
+        type: internal
+        tls: false
+      tls:
+        port: 9093
+        type: internal
+        tls: true
+        authentication:
+          type: tls
+      extusers6:
+        port: 9096
+        type: loadbalancer
+        tls: true
+        authentication:
+          type: scram-sha-512
+          sasl: true
+        configuration:
+          ipFamilyPolicy: SingleStack
+          ipFamilies:
+            - IPv6
+          bootstrap:
+            annotations:
+              cloud.google.com/l4-rbs: enabled
+              networking.gke.io/load-balancer-ip-addresses: kafka-ci-bootstrap-ipv6
+          brokerAnnotations:
+            cloud.google.com/l4-rbs: enabled
+          brokerIpAddresses:
+            - kafka-ci-broker-100-ipv6
+            - kafka-ci-broker-101-ipv6
+            - kafka-ci-broker-102-ipv6
+  keeper:
+    broker:
+      replicas: 3
+      name: kafka
+      nodeIds: "[100-199]"
+      nodeStartId: 100
+      resources:
+        limits:
+          cpu: "4"
+          memory: 4Gi
+        requests:
+          cpu: "1"
+          memory: 2Gi
+      storage:
+        volumes:
+          - id: 0
+            type: persistent-claim
+            size: 10Gi
+            kraftMetadata: shared
+            deleteClaim: false
+    controller:
+      name: controller
+      replicas: 3
+      terminationGracePeriodSeconds: 30
+      resources:
+        limits:
+          cpu: "2"
+          memory: 2Gi
+        requests:
+          cpu: "1"
+          memory: 1Gi
+      storage:
+        volumes:
+          - id: 0
+            type: persistent-claim
+            size: 10Gi
+            kraftMetadata: shared
+            deleteClaim: false
+namespace: kafka-ci

@@ -48,6 +48,9 @@ jobs:
       - name: Test load-balancer templates
         run: uv run .github/scripts/test-load-balancer.py
 
+      - name: Test kafka-config templates
+        run: uv run .github/scripts/test-kafka-config.py
+
       # - name: Run chart-testing (list-changed)
       #   id: list-changed
       #   run: |
