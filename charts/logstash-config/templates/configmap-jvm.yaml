@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-jvm-options
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "logstash.labels" . | nindent 4 }}
+data:
+  jvm.options: |
+    -Xms{{ .Values.jvm.xms }}
+    -Xmx{{ .Values.jvm.xmx }}
+    -XX:+UseG1GC
+    -Djava.awt.headless=true
+    -Dfile.encoding=UTF-8
+    -Djruby.compile.invokedynamic=true
+    -XX:+HeapDumpOnOutOfMemoryError

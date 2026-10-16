@@ -1,0 +1,55 @@
+namespace: bmp-pipeline
+create_ns: true
+
+image:
+  repository: us-central1-docker.pkg.dev/ma-infrastructure-474617/docker-registry/stardust/bmp-pipeline
+  tag: "1.2.3"
+
+replicas: 3
+
+pipeline:
+  prefix: bmp
+  transforms:
+    - index: 20
+      configMap: bmp-initial-format
+    - index: 90
+      configMap: bmp-afi-safi
+    - index: 100
+      configMap: bmp-dns
+
+resources:
+  requests:
+    memory: 32Gi
+    cpu: "12"
+  limits:
+    memory: 32Gi
+    cpu: "12"
+
+jvm:
+  xms: 16g
+  xmx: 16g
+
+logstash:
+  workers: 36
+  batchSize: 1000
+
+elasticsearch:
+  hosts:
+    - "https://34.136.91.137:9200"
+    - "https://35.223.57.250:9200"
+    - "https://35.202.182.99:9200"
+  index: stardust_bmp
+  cacert: /etc/stardust/pipeline/certificates/elastic.cer
+  sslVerificationMode: none
+
+kafka:
+  bootstrapServers: "kafka.prod:9092"
+  topic: stardust_bmp
+  groupId: logstash-bmp-prod
+  autoOffsetReset: latest
+  consumerThreads: 4
+  maxPollRecords: 37000
+  maxPollIntervalMs: 300000
+
+credentials:
+  secretName: bmp-pipeline-credentials
