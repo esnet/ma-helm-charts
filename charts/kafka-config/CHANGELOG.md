@@ -2,6 +2,34 @@
 
 All notable changes to this project will be documented in this file.
 
+[0.0.3]
+ - Removed dual-stack (`RequireDualStack`) listener support. GKE always
+   returns the v4 address regardless of IP family policy, making dual-stack
+   non-functional. Use separate single-stack listeners for IPv4 and IPv6.
+ - Restructured listener `configuration` block: `staticIpNames` (a joined
+   list on the bootstrap annotation) is replaced by `configuration.bootstrap.
+   annotations` (a free-form annotations map) and `configuration.brokers`
+   (a list of `{id, annotations}` entries), matching the Strimzi API directly.
+ - Added `cloud.google.com/l4-rbs: enabled` annotation support for IPv6
+   listeners that require GKE L4 Regional Backend Services.
+ - Broker IDs now start at 100. Added `config.keeper.broker.nodeIds`
+   (default `"[100-199]"`), rendered as the `strimzi.io/next-node-ids`
+   annotation on the broker `KafkaNodePool`.
+ - Added `config.keeper.broker.nodeStartId` (default `100`). The listener
+   template uses this alongside `broker.replicas` to auto-generate the
+   per-broker configuration block via `untilStep`, matching the Jinja2
+   `range(nodeStartId, nodeStartId + broker_replicas)` pattern. No explicit
+   broker list is required in listener values — scale `replicas` and all
+   broker entries follow automatically.
+ - `configuration.brokers` (explicit list) replaced by two optional fields:
+   `configuration.brokerAnnotations` (map applied to every broker) and
+   `configuration.brokerIpAddresses` (positional list of GCP address resource
+   names, where index 0 maps to the first broker at `nodeStartId`). Both
+   fields are optional. Scaling replicas only requires appending to the list,
+   no broker IDs to maintain.
+ - Updated `values.yaml` listener examples to reflect the new structure
+   for IPv4, IPv6, and external TLS single-stack loadbalancer listeners.
+
 [0.0.2]
  - Fixed `jmxOptions` being rendered at the wrong nesting level (was a sibling
    of `spec.kafka` instead of nested under it, so enabling it never actually

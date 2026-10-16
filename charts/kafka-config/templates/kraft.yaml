@@ -55,6 +55,8 @@ apiVersion: kafka.strimzi.io/v1
 kind: KafkaNodePool
 metadata:
   name: {{ .Values.config.keeper.broker.name }}
+  annotations:
+    strimzi.io/next-node-ids: {{ .Values.config.keeper.broker.nodeIds | quote }}
   labels:
     strimzi.io/cluster: {{ .Values.config.kafka.clusterName }}
     {{- include "kafka.componentLabels" (list . "broker") | nindent 4 }}

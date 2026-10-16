@@ -94,24 +94,11 @@ config:
         tls: true
         authentication:
           type: tls
-      # External SCRAM-SHA-512 — dual-stack loadbalancer (IPv6 + IPv4):
-      # extusers:
-      #   port: 9095
-      #   type: loadbalancer
-      #   tls: true
-      #   authentication:
-      #     type: scram-sha-512
-      #     sasl: true
-      #   configuration:
-      #     ipFamilyPolicy: RequireDualStack
-      #     ipFamilies:
-      #       - IPv6
-      #       - IPv4
-      #     staticIpNames:
-      #       - kafka-dev-staging-ipv6
-      #       - kafka-dev-staging-ipv4
-      #
       # External SCRAM-SHA-512 — single-stack loadbalancer (IPv4 only):
+      # brokerAnnotations are applied to every broker, derived from
+      # keeper.broker.replicas + keeper.broker.nodeStartId automatically.
+      # brokerIpAddresses is optional: map of broker ID (as string) -> GCP
+      # address resource name. Omit entirely if you don't use static IPs.
       # extusers:
       #   port: 9095
       #   type: loadbalancer
@@ -123,8 +110,40 @@ config:
       #     ipFamilyPolicy: SingleStack
       #     ipFamilies:
       #       - IPv4
-      #     staticIpNames:
-      #       - kafka-dev-staging-ipv4
+      #     bootstrap:
+      #       annotations:
+      #         cloud.google.com/l4-rbs: enabled
+      #         networking.gke.io/load-balancer-ip-addresses: kafka-dev-staging-ipv4
+      #     brokerAnnotations:
+      #       cloud.google.com/l4-rbs: enabled
+      #     brokerIpAddresses:  # positional — index 0 = broker nodeStartId, 1 = next, etc.
+      #       - kafka-dev-staging-broker-100-ipv4
+      #       - kafka-dev-staging-broker-101-ipv4
+      #       - kafka-dev-staging-broker-102-ipv4
+      #
+      # External SCRAM-SHA-512 — single-stack loadbalancer (IPv6 only, GKE L4 RBS):
+      # Requires GKE L4 Regional Backend Services (l4-rbs) for IPv6 LB support.
+      # extusers6:
+      #   port: 9096
+      #   type: loadbalancer
+      #   tls: true
+      #   authentication:
+      #     type: scram-sha-512
+      #     sasl: true
+      #   configuration:
+      #     ipFamilyPolicy: SingleStack
+      #     ipFamilies:
+      #       - IPv6
+      #     bootstrap:
+      #       annotations:
+      #         cloud.google.com/l4-rbs: enabled
+      #         networking.gke.io/load-balancer-ip-addresses: kafka-dev-staging-ipv6
+      #     brokerAnnotations:
+      #       cloud.google.com/l4-rbs: enabled
+      #     brokerIpAddresses:  # positional — index 0 = broker nodeStartId, 1 = next, etc.
+      #       - kafka-dev-staging-broker-100-ipv6
+      #       - kafka-dev-staging-broker-101-ipv6
+      #       - kafka-dev-staging-broker-102-ipv6
       #
       # External SCRAM-SHA-512 — via gateway (no IP config needed):
       # extusers:
@@ -149,8 +168,14 @@ config:
       #     ipFamilyPolicy: SingleStack
       #     ipFamilies:
       #       - IPv4
-      #     staticIpNames:
-      #       - kafka-dev-staging-ipv4
+      #     bootstrap:
+      #       annotations:
+      #         cloud.google.com/l4-rbs: enabled
+      #         networking.gke.io/load-balancer-ip-addresses: kafka-dev-staging-ipv4
+      #     brokerAnnotations:
+      #       cloud.google.com/l4-rbs: enabled
+      #     brokerIpAddresses:  # positional — index 0 = broker nodeStartId, 1 = next, etc.
+      #       - kafka-dev-staging-broker-100-ipv4
       #
       # External TLS — via gateway (no IP config needed):
       # external:
@@ -174,6 +199,14 @@ config:
     broker:
       replicas: 3
       name: kafka
+      # Strimzi node-ID range assigned to broker pods. This annotation is set on
+      # the KafkaNodePool so Strimzi allocates IDs from this range rather than
+      # starting at 0. Must not overlap with the controller range (0-99).
+      nodeIds: "[100-199]"
+      # Integer start of the broker node-ID range. Must match the lower bound
+      # of nodeIds above. Used by listener templates to generate the per-broker
+      # configuration block without requiring an explicit broker list.
+      nodeStartId: 100
       # CPU / memory for broker pods.
       resources:
         limits:
