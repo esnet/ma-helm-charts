@@ -1,0 +1,22 @@
+charts/kafka-config/CHANGELOG.md
+  h_5c3111fc5355aa 5-32
+charts/kafka-config/Chart.yaml
+  h_5c3111fc5355aa 4
+charts/kafka-config/templates/kafka.yaml
+  h_5c3111fc5355aa 28,30,32-35,37,39-40,45-64
+charts/kafka-config/templates/kraft.yaml
+  h_5c3111fc5355aa 58-59
+charts/kafka-config/values.yaml
+  h_5c3111fc5355aa 97-101,110,113-122,124-127,136-146,171-178,202-209
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "aa2f249faaf72857f938d7f70cf291a7fdbd2320",
+  "prompts": {},
+  "humans": {
+    "h_5c3111fc5355aa": {
+      "author": "Samir Faci <samir@es.net>"
+    }
+  }
+}
