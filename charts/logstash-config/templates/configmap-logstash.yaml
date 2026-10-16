@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-logstash-config
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "logstash.labels" . | nindent 4 }}
+data:
+  logstash.yml: |
+    log.level: "info"
+    pipeline.workers: {{ .Values.logstash.workers }}
+    pipeline.batch.size: {{ .Values.logstash.batchSize }}
+    api.http.host: "0.0.0.0"
+    api.http.port: 9600

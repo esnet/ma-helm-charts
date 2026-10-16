@@ -1,0 +1,25 @@
+namespace: bmp-pipeline
+create_ns: false
+
+image:
+  repository: docker.elastic.co/logstash/logstash
+  tag: "9.5.5"
+
+replicas: 1
+
+pipeline:
+  prefix: bmp
+  transforms: []
+
+elasticsearch:
+  hosts:
+    - "https://el.staging:9200"
+  index: stardust_bmp
+
+kafka:
+  bootstrapServers: "kafka.staging:9092"
+  topic: stardust_bmp
+  groupId: logstash-bmp-staging
+
+credentials:
+  secretName: bmp-pipeline-credentials
