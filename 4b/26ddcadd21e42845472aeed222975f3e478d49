@@ -1,0 +1,22 @@
+.github/scripts/test-logstash-config.py
+  h_5c3111fc5355aa 158,161,166,169,177,380,384-386,389
+charts/logstash-config/CHANGELOG.md
+  h_5c3111fc5355aa 10-17
+charts/logstash-config/templates/_helpers.tpl
+  h_5c3111fc5355aa 54-57,59,61-67,69,84-113
+charts/logstash-config/templates/logstash.yaml
+  h_5c3111fc5355aa 19,56-59,65-66
+charts/logstash-config/values.yaml
+  h_5c3111fc5355aa 67,102-103
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "4b26ddcadd21e42845472aeed222975f3e478d49",
+  "prompts": {},
+  "humans": {
+    "h_5c3111fc5355aa": {
+      "author": "Samir Faci <samir@es.net>"
+    }
+  }
+}
