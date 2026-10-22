@@ -1,0 +1,14 @@
+charts/logstash-config/templates/logstash.yaml
+  h_5c3111fc5355aa 58-59
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "97a53eaf5f018737e6d66d1f443ddb9fcaa6ce79",
+  "prompts": {},
+  "humans": {
+    "h_5c3111fc5355aa": {
+      "author": "Samir Faci <samir@es.net>"
+    }
+  }
+}
