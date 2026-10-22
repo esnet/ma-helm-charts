@@ -1,0 +1,30 @@
+.github/scripts/test-logstash-config.py
+  h_5c3111fc5355aa 52-53,65-66,217-218,221,223-224,227-229
+charts/logstash-config/CHANGELOG.md
+  h_5c3111fc5355aa 7,17-18
+charts/logstash-config/ci/minimal-values.yaml
+  h_5c3111fc5355aa 30-31
+charts/logstash-config/ci/no-create-ns-values.yaml
+  h_5c3111fc5355aa 24-25
+charts/logstash-config/ci/out-of-order-transforms-values.yaml
+  h_5c3111fc5355aa 31-32
+charts/logstash-config/ci/with-transforms-values.yaml
+  h_5c3111fc5355aa 54-55
+charts/logstash-config/templates/NOTES.txt
+  h_5c3111fc5355aa 9-18
+charts/logstash-config/templates/logstash.yaml
+  h_5c3111fc5355aa 55
+charts/logstash-config/values.yaml
+  h_5c3111fc5355aa 83-87,89-95
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "c7f0d039ef26fa882843f82b90815b630528e24b",
+  "prompts": {},
+  "humans": {
+    "h_5c3111fc5355aa": {
+      "author": "Samir Faci <samir@es.net>"
+    }
+  }
+}
