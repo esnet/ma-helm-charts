@@ -19,6 +19,12 @@ data:
         ssl.verification_mode: none
 
     processors:
+{{- if .Values.monitoring.metricbeat.clusterName }}
+      - add_fields:
+          target: ""
+          fields:
+            orchestrator.cluster.name: ${CLUSTER_NAME}
+{{- end }}
       - add_host_metadata: ~
       - add_cloud_metadata: ~
 

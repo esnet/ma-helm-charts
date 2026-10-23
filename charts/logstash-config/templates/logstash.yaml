@@ -169,6 +169,10 @@ spec:
                 secretKeyRef:
                   name: {{ .Values.credentials.secretName }}
                   key: monitor_es_password
+{{- if .Values.monitoring.metricbeat.clusterName }}
+            - name: CLUSTER_NAME
+              value: {{ .Values.monitoring.metricbeat.clusterName | quote }}
+{{- end }}
           resources:
             limits:
               memory: {{ .Values.monitoring.metricbeat.resources.limits.memory }}

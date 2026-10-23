@@ -29,6 +29,7 @@ monitoring:
     enabled: true
     image: "docker.elastic.co/beats/metricbeat"
     imageTag: "8.19.8"  # override: prod uses 8.x, chart default is 9.5.5
+    clusterName: "bmp-staging"
     elasticsearchHost: "https://el.gc1.mgt.stardust.es.net:9200"
     period: "10s"
     resources:

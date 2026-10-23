@@ -555,6 +555,51 @@ SCENARIOS: list[dict[str, Any]] = [
         "metricbeat_config_volume_present": True,
     },
     # ------------------------------------------------------------------
+    # monitoring.metricbeat clusterName — add_fields processor rendered
+    # with CLUSTER_NAME env var on sidecar and in ConfigMap
+    # ------------------------------------------------------------------
+    {
+        "name": "metricbeat-cluster-name-rendered",
+        "values": "ci/with-metricbeat-values.yaml",
+        "present": ["Logstash"],
+        "absent": [],
+        "fields": [
+            (
+                "Logstash",
+                ["spec", "podTemplate", "spec", "containers", 1, "env", 2, "name"],
+                "CLUSTER_NAME",
+            ),
+            (
+                "Logstash",
+                ["spec", "podTemplate", "spec", "containers", 1, "env", 2, "value"],
+                "bmp-staging",
+            ),
+        ],
+        "content_checks": [
+            ("ConfigMap", "metricbeat.yml", "orchestrator.cluster.name"),
+            ("ConfigMap", "metricbeat.yml", "${CLUSTER_NAME}"),
+        ],
+        "content_absent": [],
+    },
+    # ------------------------------------------------------------------
+    # monitoring.metricbeat clusterName empty — add_fields processor
+    # and CLUSTER_NAME env var omitted
+    # ------------------------------------------------------------------
+    {
+        "name": "metricbeat-cluster-name-omitted-when-empty",
+        "extra_args": [
+            "-f", f"{CHART}/ci/with-metricbeat-values.yaml",
+            "--set", "monitoring.metricbeat.clusterName=",
+        ],
+        "present": ["Logstash"],
+        "absent": [],
+        "fields": [],
+        "content_absent": [
+            ("ConfigMap", "metricbeat.yml", "orchestrator.cluster.name"),
+            ("ConfigMap", "metricbeat.yml", "${CLUSTER_NAME}"),
+        ],
+    },
+    # ------------------------------------------------------------------
     # Hard-fail: transform index 1 is reserved (inputs slot)
     # ------------------------------------------------------------------
     {
