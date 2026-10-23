@@ -1,0 +1,35 @@
+{{- if .Values.monitoring.metricbeat.enabled }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-metricbeat-config
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "logstash.labels" . | nindent 4 }}
+data:
+  metricbeat.yml: |
+    metricbeat.modules:
+      - module: logstash
+        xpack.enabled: true
+        metricsets:
+          - node
+          - node_stats
+        period: {{ .Values.monitoring.metricbeat.period }}
+        hosts: ["https://localhost:9600"]
+        ssl.verification_mode: none
+
+    processors:
+      - add_host_metadata: ~
+      - add_cloud_metadata: ~
+
+    output.elasticsearch:
+      hosts: ["{{ .Values.monitoring.metricbeat.elasticsearchHost }}"]
+      username: ${MONITOR_ES_USERNAME}
+      password: ${MONITOR_ES_PASSWORD}
+      ssl.verification_mode: "none"
+      protocol: "https"
+
+    setup.template.settings:
+      index.number_of_shards: 1
+      index.codec: best_compression
+{{- end }}

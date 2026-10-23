@@ -154,10 +154,49 @@ spec:
               mountPath: {{ .Values.tlsCertExtractor.outputPath | quote }}
               readOnly: true
 {{- end }}
+{{- if .Values.monitoring.metricbeat.enabled }}
+        - name: metricbeat
+          image: "{{ .Values.monitoring.metricbeat.image }}:{{ .Values.monitoring.metricbeat.imageTag }}"
+          args: ["-c", "/etc/metricbeat.yml", "-e"]
+          env:
+            - name: MONITOR_ES_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.credentials.secretName }}
+                  key: monitor_es_username
+            - name: MONITOR_ES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.credentials.secretName }}
+                  key: monitor_es_password
+          resources:
+            limits:
+              memory: {{ .Values.monitoring.metricbeat.resources.limits.memory }}
+            requests:
+              cpu: {{ .Values.monitoring.metricbeat.resources.requests.cpu }}
+              memory: {{ .Values.monitoring.metricbeat.resources.requests.memory }}
+          securityContext:
+            runAsUser: 0
+          volumeMounts:
+            - name: metricbeat-config
+              mountPath: /etc/metricbeat.yml
+              subPath: metricbeat.yml
+              readOnly: true
+            - name: metricbeat-data
+              mountPath: /usr/share/metricbeat/data
+{{- end }}
       volumes:
         {{- include "logstash.pipelineVolumes" (list . .Values.pipeline.transforms) | nindent 8 }}
 {{- if .Values.tlsCertExtractor.enabled }}
         - name: tls-certs
+          emptyDir: {}
+{{- end }}
+{{- if .Values.monitoring.metricbeat.enabled }}
+        - name: metricbeat-config
+          configMap:
+            name: {{ .Release.Name }}-metricbeat-config
+            defaultMode: 0640
+        - name: metricbeat-data
           emptyDir: {}
 {{- end }}
 

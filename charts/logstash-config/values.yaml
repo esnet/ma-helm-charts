@@ -146,6 +146,32 @@ credentials:
   # Name of the pre-existing Secret to reference via envFrom.
   secretName: ""
 
+# Monitoring sidecars. Exactly one backend should be enabled at a time.
+# Each backend injects a sidecar container into the Logstash pod and uses
+# the existing credentials.secretName Secret for its auth credentials.
+monitoring:
+  # Metricbeat sidecar — ships Logstash node/pipeline stats to Elasticsearch
+  # via the logstash xpack module (Stack Monitoring). Connects to the
+  # Logstash API at https://localhost:9600 (ECK enables TLS on the API by
+  # default). Credentials are read from credentials.secretName — the Secret
+  # must contain monitor_es_username and monitor_es_password keys.
+  metricbeat:
+    enabled: false
+    image: "docker.elastic.co/beats/metricbeat"
+    imageTag: "9.5.5"
+    # Monitoring Elasticsearch cluster URL (not the data-ingest cluster).
+    elasticsearchHost: "https://el.gc1.mgt.stardust.es.net:9200"
+    # Poll interval for node + node_stats metricsets.
+    period: "10s"
+    resources:
+      limits:
+        memory: 500Mi
+      requests:
+        cpu: 250m
+        memory: 250Mi
+  # otel:
+  #   enabled: false   # future: OpenTelemetry collector sidecar
+
 # Arbitrary additional Kubernetes manifests.
 # Use this to provide pipeline-specific transform ConfigMaps that the
 # chart will mount into the Logstash pod and load via path.config

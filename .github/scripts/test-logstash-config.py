@@ -449,6 +449,112 @@ SCENARIOS: list[dict[str, Any]] = [
         "content_absent": [],
     },
     # ------------------------------------------------------------------
+    # monitoring.metricbeat disabled by default — no metricbeat sidecar,
+    # no metricbeat ConfigMap, no metricbeat volumes
+    # ------------------------------------------------------------------
+    {
+        "name": "metricbeat-disabled-by-default",
+        "values": "ci/minimal-values.yaml",
+        "present": ["Logstash"],
+        "absent": [],
+        "fields": [],
+        "metricbeat_sidecar_absent": True,
+        "metricbeat_configmap_absent": True,
+        "metricbeat_volumes_absent": True,
+    },
+    # ------------------------------------------------------------------
+    # monitoring.metricbeat enabled — metricbeat ConfigMap rendered
+    # ------------------------------------------------------------------
+    {
+        "name": "metricbeat-enabled-renders-configmap",
+        "values": "ci/with-metricbeat-values.yaml",
+        "present": ["ConfigMap"],
+        "absent": [],
+        "fields": [],
+        "content_checks": [
+            ("ConfigMap", "metricbeat.yml", "module: logstash"),
+            ("ConfigMap", "metricbeat.yml", "xpack.enabled: true"),
+            ("ConfigMap", "metricbeat.yml", "https://localhost:9600"),
+            ("ConfigMap", "metricbeat.yml", "ssl.verification_mode: none"),
+            ("ConfigMap", "metricbeat.yml", "${MONITOR_ES_USERNAME}"),
+            ("ConfigMap", "metricbeat.yml", "${MONITOR_ES_PASSWORD}"),
+            ("ConfigMap", "metricbeat.yml", "https://el.gc1.mgt.stardust.es.net:9200"),
+            ("ConfigMap", "metricbeat.yml", "node_stats"),
+        ],
+        "content_absent": [],
+    },
+    # ------------------------------------------------------------------
+    # monitoring.metricbeat enabled — sidecar container rendered in pod
+    # ------------------------------------------------------------------
+    {
+        "name": "metricbeat-enabled-renders-sidecar",
+        "values": "ci/with-metricbeat-values.yaml",
+        "present": ["Logstash"],
+        "absent": [],
+        "fields": [
+            (
+                "Logstash",
+                ["spec", "podTemplate", "spec", "containers", 1, "name"],
+                "metricbeat",
+            ),
+            (
+                "Logstash",
+                ["spec", "podTemplate", "spec", "containers", 1, "image"],
+                "docker.elastic.co/beats/metricbeat:8.19.8",
+            ),
+        ],
+    },
+    # ------------------------------------------------------------------
+    # monitoring.metricbeat enabled — credentials sourced from
+    # credentials.secretName via secretKeyRef (not envFrom)
+    # ------------------------------------------------------------------
+    {
+        "name": "metricbeat-credentials-from-secret",
+        "values": "ci/with-metricbeat-values.yaml",
+        "present": ["Logstash"],
+        "absent": [],
+        "fields": [
+            (
+                "Logstash",
+                ["spec", "podTemplate", "spec", "containers", 1, "env", 0, "name"],
+                "MONITOR_ES_USERNAME",
+            ),
+            (
+                "Logstash",
+                ["spec", "podTemplate", "spec", "containers", 1, "env", 0, "valueFrom", "secretKeyRef", "name"],
+                "bmp-pipeline-credentials",
+            ),
+            (
+                "Logstash",
+                ["spec", "podTemplate", "spec", "containers", 1, "env", 0, "valueFrom", "secretKeyRef", "key"],
+                "monitor_es_username",
+            ),
+            (
+                "Logstash",
+                ["spec", "podTemplate", "spec", "containers", 1, "env", 1, "name"],
+                "MONITOR_ES_PASSWORD",
+            ),
+            (
+                "Logstash",
+                ["spec", "podTemplate", "spec", "containers", 1, "env", 1, "valueFrom", "secretKeyRef", "key"],
+                "monitor_es_password",
+            ),
+        ],
+    },
+    # ------------------------------------------------------------------
+    # monitoring.metricbeat enabled — emptyDir data volume and config
+    # volume present; metricbeat-config mounted into sidecar
+    # ------------------------------------------------------------------
+    {
+        "name": "metricbeat-enabled-renders-volumes",
+        "values": "ci/with-metricbeat-values.yaml",
+        "present": ["Logstash"],
+        "absent": [],
+        "fields": [],
+        "volume_present": "metricbeat-data",
+        "metricbeat_config_volume_present": True,
+    },
+    # ------------------------------------------------------------------
     # Hard-fail: transform index 1 is reserved (inputs slot)
     # ------------------------------------------------------------------
     {
@@ -681,6 +787,39 @@ def run_scenario(scenario: dict[str, Any], docs: list[dict]) -> None:
             raise AssertionError("liveness_probe_absent check: no container named 'logstash' found")
         if "livenessProbe" in logstash_container:
             raise AssertionError("livenessProbe must not be present but was rendered")
+
+    if scenario.get("metricbeat_sidecar_absent"):
+        logstash_docs = find_all(docs, "Logstash")
+        if not logstash_docs:
+            raise AssertionError("metricbeat_sidecar_absent check: no Logstash resource found")
+        containers = logstash_docs[0]["spec"]["podTemplate"]["spec"]["containers"]
+        mb = next((c for c in containers if c.get("name") == "metricbeat"), None)
+        if mb is not None:
+            raise AssertionError("metricbeat sidecar must not be present but was rendered")
+
+    if scenario.get("metricbeat_configmap_absent"):
+        cms = find_all(docs, "ConfigMap")
+        if any("metricbeat" in (cm.get("metadata", {}).get("name", "")) for cm in cms):
+            raise AssertionError("metricbeat ConfigMap must not be present but was rendered")
+
+    if scenario.get("metricbeat_volumes_absent"):
+        logstash_docs = find_all(docs, "Logstash")
+        if not logstash_docs:
+            raise AssertionError("metricbeat_volumes_absent check: no Logstash resource found")
+        volumes = logstash_docs[0]["spec"]["podTemplate"]["spec"].get("volumes", [])
+        names = [v.get("name", "") for v in volumes]
+        for vname in ("metricbeat-data", "metricbeat-config"):
+            if vname in names:
+                raise AssertionError(f"volume {vname!r} must not be present but was rendered")
+
+    if scenario.get("metricbeat_config_volume_present"):
+        logstash_docs = find_all(docs, "Logstash")
+        if not logstash_docs:
+            raise AssertionError("metricbeat_config_volume_present check: no Logstash resource found")
+        volumes = logstash_docs[0]["spec"]["podTemplate"]["spec"].get("volumes", [])
+        names = [v.get("name", "") for v in volumes]
+        if "metricbeat-config" not in names:
+            raise AssertionError("volume 'metricbeat-config' must be present but was not rendered")
 
 
 def main() -> None:
