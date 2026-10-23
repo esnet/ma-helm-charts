@@ -1,0 +1,32 @@
+# Transforms intentionally declared out-of-order to verify index sorting
+namespace: bmp-pipeline
+create_ns: false
+
+image:
+  repository: docker.elastic.co/logstash/logstash
+  tag: "9.5.5"
+
+replicas: 1
+
+pipeline:
+  prefix: bmp
+  transforms:
+    - index: 100
+      configMap: bmp-dns
+    - index: 20
+      configMap: bmp-initial-format
+    - index: 90
+      configMap: bmp-afi-safi
+
+elasticsearch:
+  hosts:
+    - "https://el.staging:9200"
+  index: stardust_bmp
+
+kafka:
+  bootstrapServers: "kafka.staging:9092"
+  topic: stardust_bmp
+  groupId: logstash-bmp-staging
+
+credentials:
+  secretName: bmp-pipeline-credentials

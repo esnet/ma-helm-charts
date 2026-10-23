@@ -1,0 +1,29 @@
+{{- $prefix := .Values.pipeline.prefix -}}
+{{- $filename := printf "%s-%s-outputs.conf" $prefix (include "logstash.pad3" 999) -}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ .Release.Name }}-outputs
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "logstash.labels" . | nindent 4 }}
+data:
+  {{ $filename }}: |
+    output {
+        elasticsearch {
+            hosts => [
+    {{- range .Values.elasticsearch.hosts }}
+                "{{ . }}"
+    {{- end }}
+            ]
+            ssl_enabled => true
+    {{- if .Values.elasticsearch.cacert }}
+            ssl_certificate_authorities => ["{{ .Values.elasticsearch.cacert }}"]
+    {{- end }}
+            ssl_verification_mode => "{{ .Values.elasticsearch.sslVerificationMode }}"
+            user => "${elastic_user}"
+            password => "${elastic_password}"
+            action => "create"
+            index => "{{ .Values.elasticsearch.index }}"
+        }
+    }
