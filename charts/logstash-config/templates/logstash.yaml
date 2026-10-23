@@ -212,6 +212,3 @@ spec:
     config.reload.interval: "30s"
     api.http.host: "0.0.0.0"
     api.http.port: 9600
-{{- if .Values.monitoring.clusterUuid }}
-    xpack.monitoring.cluster_uuid: {{ .Values.monitoring.clusterUuid | quote }}
-{{- end }}

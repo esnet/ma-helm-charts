@@ -150,13 +150,6 @@ credentials:
 # Each backend injects a sidecar container into the Logstash pod and uses
 # the existing credentials.secretName Secret for its auth credentials.
 monitoring:
-  # UUID of the Elasticsearch data cluster this Logstash pipeline serves.
-  # Written to xpack.monitoring.cluster_uuid in spec.config so Kibana Stack
-  # Monitoring can associate this Logstash node with the correct cluster.
-  # Leave empty to omit the setting (Stack Monitoring will still work but
-  # the node may not be grouped under the expected cluster in the UI).
-  clusterUuid: ""
-
   # Metricbeat sidecar — ships Logstash node/pipeline stats to Elasticsearch
   # via the logstash xpack module (Stack Monitoring). Connects to the
   # Logstash API at https://localhost:9600 (ECK enables TLS on the API by

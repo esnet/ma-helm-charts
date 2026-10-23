@@ -25,7 +25,6 @@ credentials:
   secretName: bmp-pipeline-credentials
 
 monitoring:
-  clusterUuid: "xRvQMigDR4SnJzwLZQQjZw"
   metricbeat:
     enabled: true
     image: "docker.elastic.co/beats/metricbeat"
