@@ -117,9 +117,31 @@ spec:
                   LIVE=$(openssl s_client -connect "${HOST}:${PORT}" -showcerts </dev/null 2>/dev/null \
                     | sed -n '/-----BEGIN CERTIFICATE-----/,/-----END CERTIFICATE-----/p')
                   [ -z "${LIVE}" ] && exit 0
-                  LIVE_FP=$(echo "${LIVE}" | openssl x509 -noout -fingerprint -sha256 2>/dev/null | head -1)
-                  DISK_FP=$(openssl x509 -noout -fingerprint -sha256 -in "${PEM}" 2>/dev/null | head -1)
-                  [ "${LIVE_FP}" = "${DISK_FP}" ] && exit 0 || exit 1
+                  # Split the live chain into individual cert files; find the CA (self-signed: subject == issuer).
+                  # openssl x509 reads only the first cert from a multi-cert PEM — must split first.
+                  echo "${LIVE}" | awk '/-----BEGIN CERTIFICATE-----/{cert=""} {cert=cert $0 "\n"} /-----END CERTIFICATE-----/{print cert > "/tmp/probe-cert-" ++n ".pem"}'
+                  LIVE_CA_FP=""
+                  for f in /tmp/probe-cert-*.pem; do
+                    subj=$(openssl x509 -noout -subject -in "${f}" 2>/dev/null)
+                    issr=$(openssl x509 -noout -issuer  -in "${f}" 2>/dev/null)
+                    if [ "${subj}" = "${issr}" ]; then
+                      LIVE_CA_FP=$(openssl x509 -noout -fingerprint -sha256 -in "${f}" 2>/dev/null | head -1)
+                      break
+                    fi
+                  done
+                  # Split the on-disk chain the same way
+                  awk '/-----BEGIN CERTIFICATE-----/{cert=""} {cert=cert $0 "\n"} /-----END CERTIFICATE-----/{print cert > "/tmp/disk-cert-" ++n ".pem"}' "${PEM}"
+                  DISK_CA_FP=""
+                  for f in /tmp/disk-cert-*.pem; do
+                    subj=$(openssl x509 -noout -subject -in "${f}" 2>/dev/null)
+                    issr=$(openssl x509 -noout -issuer  -in "${f}" 2>/dev/null)
+                    if [ "${subj}" = "${issr}" ]; then
+                      DISK_CA_FP=$(openssl x509 -noout -fingerprint -sha256 -in "${f}" 2>/dev/null | head -1)
+                      break
+                    fi
+                  done
+                  # Fail safe if no CA found in live chain; pass only on confirmed match
+                  [ -n "${LIVE_CA_FP}" ] && [ "${LIVE_CA_FP}" = "${DISK_CA_FP}" ] && exit 0 || exit 1
             initialDelaySeconds: {{ .Values.tlsCertExtractor.livenessProbe.initialDelaySeconds }}
             periodSeconds: {{ .Values.tlsCertExtractor.livenessProbe.periodSeconds }}
             timeoutSeconds: {{ .Values.tlsCertExtractor.livenessProbe.timeoutSeconds }}

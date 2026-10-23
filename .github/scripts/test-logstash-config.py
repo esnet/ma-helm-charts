@@ -392,7 +392,19 @@ SCENARIOS: list[dict[str, Any]] = [
                 1,
             ),
         ],
-        "liveness_probe_script_contains": ["openssl s_client", "openssl x509", "fingerprint", "kafka.example.com", "9095"],
+        "liveness_probe_script_contains": [
+            "openssl s_client",
+            "openssl x509",
+            "fingerprint",
+            "kafka.example.com",
+            "9095",
+            "subject",
+            "issuer",
+            "/tmp/probe-cert-",
+            "/tmp/disk-cert-",
+            "LIVE_CA_FP",
+            "DISK_CA_FP",
+        ],
     },
     # ------------------------------------------------------------------
     # liveness probe absent when tlsCertExtractor disabled
