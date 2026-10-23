@@ -582,6 +582,34 @@ SCENARIOS: list[dict[str, Any]] = [
         "content_absent": [],
     },
     # ------------------------------------------------------------------
+    # monitoring.clusterUuid set — xpack.monitoring.cluster_uuid rendered
+    # in spec.config
+    # ------------------------------------------------------------------
+    {
+        "name": "monitoring-cluster-uuid-rendered-when-set",
+        "values": "ci/with-metricbeat-values.yaml",
+        "present": ["Logstash"],
+        "absent": [],
+        "fields": [
+            (
+                "Logstash",
+                ["spec", "config", "xpack.monitoring.cluster_uuid"],
+                "xRvQMigDR4SnJzwLZQQjZw",
+            ),
+        ],
+    },
+    # ------------------------------------------------------------------
+    # monitoring.clusterUuid empty — xpack.monitoring.cluster_uuid omitted
+    # ------------------------------------------------------------------
+    {
+        "name": "monitoring-cluster-uuid-omitted-when-empty",
+        "values": "ci/minimal-values.yaml",
+        "present": ["Logstash"],
+        "absent": [],
+        "fields": [],
+        "cluster_uuid_absent": True,
+    },
+    # ------------------------------------------------------------------
     # monitoring.metricbeat clusterName empty — add_fields processor
     # and CLUSTER_NAME env var omitted
     # ------------------------------------------------------------------
@@ -832,6 +860,14 @@ def run_scenario(scenario: dict[str, Any], docs: list[dict]) -> None:
             raise AssertionError("liveness_probe_absent check: no container named 'logstash' found")
         if "livenessProbe" in logstash_container:
             raise AssertionError("livenessProbe must not be present but was rendered")
+
+    if scenario.get("cluster_uuid_absent"):
+        logstash_docs = find_all(docs, "Logstash")
+        if not logstash_docs:
+            raise AssertionError("cluster_uuid_absent check: no Logstash resource found")
+        config = logstash_docs[0]["spec"].get("config", {})
+        if "xpack.monitoring.cluster_uuid" in config:
+            raise AssertionError("xpack.monitoring.cluster_uuid must not be present but was rendered")
 
     if scenario.get("metricbeat_sidecar_absent"):
         logstash_docs = find_all(docs, "Logstash")
