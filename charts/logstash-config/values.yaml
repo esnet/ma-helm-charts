@@ -161,12 +161,6 @@ monitoring:
     imageTag: "9.5.5"
     # Monitoring Elasticsearch cluster URL (not the data-ingest cluster).
     elasticsearchHost: "https://el.gc1.mgt.stardust.es.net:9200"
-    # UUID of the Elasticsearch data cluster this Logstash pipeline serves.
-    # Written as cluster_uuid in every metricbeat monitoring document so
-    # Kibana Stack Monitoring can associate this Logstash node with the
-    # correct cluster. Use `GET /` on the data cluster to find the UUID.
-    # Leave empty to omit the field.
-    clusterUuid: ""
     # Cluster/environment label written to orchestrator.cluster.name in every
     # metricbeat document — use this to distinguish staging from prod in
     # Kibana Stack Monitoring (e.g. "bmp-staging", "bmp-prod").
