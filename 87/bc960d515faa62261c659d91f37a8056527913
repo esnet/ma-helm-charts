@@ -1,0 +1,21 @@
+charts/logstash-config/values.yaml
+  h_5c3111fc5355aa 83,88,123
+  h_5c3111fc5355aa 82
+charts/logstash-config/templates/logstash.yaml
+  h_5c3111fc5355aa 49-65,67
+charts/logstash-config/ci/with-tls-extractor-values.yaml
+  h_5c3111fc5355aa 16,21,42
+.github/scripts/test-logstash-config.py
+  h_5c3111fc5355aa 279,335,351,353
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "87bc960d515faa62261c659d91f37a8056527913",
+  "prompts": {},
+  "humans": {
+    "h_5c3111fc5355aa": {
+      "author": "Samir Faci <samir@es.net>"
+    }
+  }
+}
