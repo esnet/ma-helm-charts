@@ -1,0 +1,22 @@
+.github/scripts/test-logstash-config.py
+  h_5c3111fc5355aa 558-602
+charts/logstash-config/ci/with-metricbeat-values.yaml
+  h_5c3111fc5355aa 32
+charts/logstash-config/templates/configmap-metricbeat.yaml
+  h_5c3111fc5355aa 22-27
+charts/logstash-config/templates/logstash.yaml
+  h_5c3111fc5355aa 172-175
+charts/logstash-config/values.yaml
+  h_5c3111fc5355aa 164-168
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "2ab20e73044c0331a37c430a08a7b88940f569a7",
+  "prompts": {},
+  "humans": {
+    "h_5c3111fc5355aa": {
+      "author": "Samir Faci <samir@es.net>"
+    }
+  }
+}
