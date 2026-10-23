@@ -1,0 +1,52 @@
+charts/logstash-config/Chart.yaml
+  h_5c3111fc5355aa 1-7
+charts/logstash-config/ci/no-create-ns-values.yaml
+  h_5c3111fc5355aa 1-25
+charts/logstash-config/templates/logstash.yaml
+  h_5c3111fc5355aa 1-149
+charts/logstash-config/ci/with-tls-extractor-values.yaml
+  h_5c3111fc5355aa 1-46
+charts/logstash-config/ci/with-transforms-values.yaml
+  h_5c3111fc5355aa 1-55
+charts/logstash-config/templates/configmap-jvm.yaml
+  h_5c3111fc5355aa 1-16
+charts/logstash-config/templates/NOTES.txt
+  h_5c3111fc5355aa 1-38
+.github/scripts/test-logstash-config.py
+  h_5c3111fc5355aa 1-235,238,240-241,244-246,251-578,581-730
+  h_5c3111fc5355aa 236-237,239,242-243,247-250,579-580
+charts/logstash-config/ci/minimal-values.yaml
+  h_5c3111fc5355aa 1-31
+.github/workflows/linting.yml
+  h_5c3111fc5355aa 51-53
+charts/logstash-config/templates/configmap-logstash.yaml
+  h_5c3111fc5355aa 1-14
+charts/logstash-config/templates/_helpers.tpl
+  h_5c3111fc5355aa 1-115
+charts/logstash-config/CHANGELOG.md
+  h_5c3111fc5355aa 1-20
+charts/logstash-config/templates/namespace.yaml
+  h_5c3111fc5355aa 1-8
+charts/logstash-config/templates/configmap-inputs.yaml
+  h_5c3111fc5355aa 1-36
+charts/logstash-config/templates/configmap-outputs.yaml
+  h_5c3111fc5355aa 1-29
+charts/logstash-config/values.yaml
+  h_5c3111fc5355aa 1-92,94-153
+  h_5c3111fc5355aa 93
+charts/logstash-config/ci/out-of-order-transforms-values.yaml
+  h_5c3111fc5355aa 1-32
+charts/logstash-config/templates/extra-resources.yaml
+  h_5c3111fc5355aa 1-6
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "019c7d90925384c42b18155612278235502aff7f",
+  "prompts": {},
+  "humans": {
+    "h_5c3111fc5355aa": {
+      "author": "Samir Faci <samir@es.net>"
+    }
+  }
+}
