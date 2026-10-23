@@ -1,0 +1,72 @@
+charts/kafka-config/CHANGELOG.md
+  h_5c3111fc5355aa 5-31,32-40,41
+charts/kafka-config/Chart.yaml
+  h_5c3111fc5355aa 4
+charts/kafka-config/templates/kafka.yaml
+  h_5c3111fc5355aa 28,30,32-35,37,39-40,45-64
+charts/kafka-config/templates/kraft.yaml
+  h_5c3111fc5355aa 5,40,46,49,58-59,101,104
+charts/kafka-config/values.yaml
+  h_5c3111fc5355aa 97-101,110,113-122,124-127,136-146,171-178,202-209,241
+.github/scripts/test-kafka-config.py
+  h_5c3111fc5355aa 1-227,228-285,286-487
+.github/workflows/linting.yml
+  h_5c3111fc5355aa 51-53,54-56
+charts/kafka-config/ci/broker-scaling-values.yaml
+  h_5c3111fc5355aa 1-60,61,62-78
+charts/kafka-config/ci/extusers-ipv4-values.yaml
+  h_5c3111fc5355aa 1-59,60,61-77
+charts/kafka-config/ci/extusers-ipv6-values.yaml
+  h_5c3111fc5355aa 1-59,60,61-77
+charts/kafka-config/ci/minimal-values.yaml
+  h_5c3111fc5355aa 1-38,39,40-56
+charts/kafka-config/ci/no-broker-ips-values.yaml
+  h_5c3111fc5355aa 1-55,56,57-73
+charts/logstash-config/templates/NOTES.txt
+  h_5c3111fc5355aa 1-8,9-18,19-38
+charts/logstash-config/templates/namespace.yaml
+  h_5c3111fc5355aa 1-8
+charts/logstash-config/templates/logstash.yaml
+  h_5c3111fc5355aa 1-13,14,15-18,19,20-22,23-30,31,32-36,37,38-40,41-48,49-65,66,67,68,69-72,73-100,101-102,103-104,105,106-127,128-129,130-134,135-136,137-140,141,142-145,146-147,148-149
+charts/logstash-config/CHANGELOG.md
+  h_5c3111fc5355aa 1-6,7,8-9,10-11,12-18,19-20
+charts/logstash-config/ci/no-create-ns-values.yaml
+  h_5c3111fc5355aa 1-23,24-25
+charts/logstash-config/templates/configmap-logstash.yaml
+  h_5c3111fc5355aa 1-14
+charts/logstash-config/templates/_helpers.tpl
+  h_5c3111fc5355aa 1-53,54-57,58,59,60,61-67,68,69,70-83,84-113,114-115
+charts/logstash-config/templates/configmap-outputs.yaml
+  h_5c3111fc5355aa 1-19,20,21,22,23-29
+charts/logstash-config/ci/with-transforms-values.yaml
+  h_5c3111fc5355aa 1-53,54-55
+charts/logstash-config/Chart.yaml
+  h_5c3111fc5355aa 1-7
+charts/logstash-config/ci/out-of-order-transforms-values.yaml
+  h_5c3111fc5355aa 1-30,31-32
+charts/logstash-config/ci/minimal-values.yaml
+  h_5c3111fc5355aa 1-29,30-31
+charts/logstash-config/templates/extra-resources.yaml
+  h_5c3111fc5355aa 1-6
+charts/logstash-config/templates/configmap-jvm.yaml
+  h_5c3111fc5355aa 1-16
+charts/logstash-config/values.yaml
+  h_5c3111fc5355aa 1-6,7-8,9-66,67,68-71,72-81,82-83,84-87,88,89-92,94-105,105,106-116,117-126,127,128-129,130-133,134-138,139,140-146,147,148-150,151-152,153
+charts/logstash-config/templates/configmap-inputs.yaml
+  h_5c3111fc5355aa 1-26,27-34,35-36
+.github/scripts/test-logstash-config.py
+  h_5c3111fc5355aa 1-51,52-53,54-56,57-64,65-66,67-117,118-134,135-168,169,170-171,172,173-176,177,178-179,180,181-187,188,189-233,234-235,238,240-241,244-246,251-278,252-253,255,279,280-334,301-302,335,336-350,351,352,353,354-355,354-370,357-358,360,371-422,377-379,388,423-439,430,438-568,569,570-572,573-575,576-577,578,581-642,626-627,643-672,673-730
+charts/logstash-config/ci/with-tls-extractor-values.yaml
+  h_5c3111fc5355aa 1-15,16,17-20,21,22-41,42,43-46
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "a97e43e712a0517c8f6ad26fcd94b635b3e19b74",
+  "prompts": {},
+  "humans": {
+    "h_5c3111fc5355aa": {
+      "author": "Samir Faci <samir@es.net>"
+    }
+  }
+}
