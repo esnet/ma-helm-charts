@@ -555,6 +555,49 @@ SCENARIOS: list[dict[str, Any]] = [
         "metricbeat_config_volume_present": True,
     },
     # ------------------------------------------------------------------
+    # monitoring.metricbeat clusterUuid — cluster_uuid add_fields processor
+    # rendered in ConfigMap and CLUSTER_UUID env var on sidecar
+    # ------------------------------------------------------------------
+    {
+        "name": "metricbeat-cluster-uuid-rendered",
+        "values": "ci/with-metricbeat-values.yaml",
+        "present": ["Logstash"],
+        "absent": [],
+        "fields": [
+            (
+                "Logstash",
+                ["spec", "podTemplate", "spec", "containers", 1, "env", 2, "name"],
+                "CLUSTER_UUID",
+            ),
+            (
+                "Logstash",
+                ["spec", "podTemplate", "spec", "containers", 1, "env", 2, "value"],
+                "xRvQMigDR4SnJzwLZQQjZw",
+            ),
+        ],
+        "content_checks": [
+            ("ConfigMap", "metricbeat.yml", "cluster_uuid: ${CLUSTER_UUID}"),
+        ],
+        "content_absent": [],
+    },
+    # ------------------------------------------------------------------
+    # monitoring.metricbeat clusterUuid empty — cluster_uuid processor
+    # and CLUSTER_UUID env var omitted
+    # ------------------------------------------------------------------
+    {
+        "name": "metricbeat-cluster-uuid-omitted-when-empty",
+        "extra_args": [
+            "-f", f"{CHART}/ci/with-metricbeat-values.yaml",
+            "--set", "monitoring.metricbeat.clusterUuid=",
+        ],
+        "present": ["Logstash"],
+        "absent": [],
+        "fields": [],
+        "content_absent": [
+            ("ConfigMap", "metricbeat.yml", "cluster_uuid"),
+        ],
+    },
+    # ------------------------------------------------------------------
     # monitoring.metricbeat clusterName — add_fields processor rendered
     # with CLUSTER_NAME env var on sidecar and in ConfigMap
     # ------------------------------------------------------------------
@@ -566,12 +609,12 @@ SCENARIOS: list[dict[str, Any]] = [
         "fields": [
             (
                 "Logstash",
-                ["spec", "podTemplate", "spec", "containers", 1, "env", 2, "name"],
+                ["spec", "podTemplate", "spec", "containers", 1, "env", 3, "name"],
                 "CLUSTER_NAME",
             ),
             (
                 "Logstash",
-                ["spec", "podTemplate", "spec", "containers", 1, "env", 2, "value"],
+                ["spec", "podTemplate", "spec", "containers", 1, "env", 3, "value"],
                 "bmp-staging",
             ),
         ],

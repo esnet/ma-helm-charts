@@ -19,6 +19,12 @@ data:
         ssl.verification_mode: none
 
     processors:
+{{- if .Values.monitoring.metricbeat.clusterUuid }}
+      - add_fields:
+          target: ""
+          fields:
+            cluster_uuid: ${CLUSTER_UUID}
+{{- end }}
 {{- if .Values.monitoring.metricbeat.clusterName }}
       - add_fields:
           target: ""
