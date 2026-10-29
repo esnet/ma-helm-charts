@@ -1,0 +1,28 @@
+charts/logstash-config/CHANGELOG.md
+  h_5c3111fc5355aa 5-14
+charts/logstash-config/ci/custom-io-values.yaml
+  h_5c3111fc5355aa 1-27
+charts/logstash-config/templates/NOTES.txt
+  h_5c3111fc5355aa 14-18,20,23-24,27-36,43-47,51-55,59-113
+charts/logstash-config/templates/_helpers.tpl
+  h_5c3111fc5355aa 39-40,46-53,58-60,67-70,74-76
+charts/logstash-config/templates/configmap-elasticsearch-output.yaml
+  h_5c3111fc5355aa 1,7,31
+charts/logstash-config/templates/configmap-kafka-input.yaml
+  h_5c3111fc5355aa 1,7,38
+charts/logstash-config/templates/logstash.yaml
+  h_5c3111fc5355aa 87,102
+charts/logstash-config/values.yaml
+  h_5c3111fc5355aa 59-62,64,117-121,154
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "eb328c991f9d0a4f6845068298533f80b6d23d74",
+  "prompts": {},
+  "humans": {
+    "h_5c3111fc5355aa": {
+      "author": "Samir Faci <samir@es.net>"
+    }
+  }
+}
