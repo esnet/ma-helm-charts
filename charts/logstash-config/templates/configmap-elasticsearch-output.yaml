@@ -1,9 +1,10 @@
+{{- if .Values.elasticsearch.enabled }}
 {{- $prefix := .Values.pipeline.prefix -}}
 {{- $filename := printf "%s-%s-outputs.conf" $prefix (include "logstash.pad3" 999) -}}
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ .Release.Name }}-outputs
+  name: {{ .Release.Name }}-elasticsearch-output
   namespace: {{ .Values.namespace }}
   labels:
     {{- include "logstash.labels" . | nindent 4 }}
@@ -27,3 +28,4 @@ data:
             index => "{{ .Values.elasticsearch.index }}"
         }
     }
+{{- end }}

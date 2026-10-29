@@ -36,35 +36,44 @@ Hard-fails if the value exceeds 999.
 {{- end }}
 
 {{/*
-Validate a transform index: must be between 2 and 998 inclusive.
-001 is reserved for inputs, 999 for outputs.
+Validate a transform index.
+001 is reserved when kafka.enabled is true; 999 is reserved when elasticsearch.enabled is true.
 Call with (list . $index).
 */}}
 {{- define "logstash.validateTransformIndex" -}}
 {{- $ctx := index . 0 -}}
 {{- $n := int (index . 1) -}}
-{{- if le $n 1 -}}
-  {{- fail (printf "transform index %d is reserved (001 = inputs)" $n) -}}
-{{- else if ge $n 999 -}}
-  {{- fail (printf "transform index %d is reserved (999 = outputs)" $n) -}}
+{{- if le $n 0 -}}
+  {{- fail (printf "transform index %d must be a positive integer" $n) -}}
+{{- else if and (le $n 1) $ctx.Values.kafka.enabled -}}
+  {{- fail (printf "transform index %d is reserved (001 = kafka input); set kafka.enabled=false to use this slot" $n) -}}
+{{- else if gt $n 999 -}}
+  {{- fail (printf "transform index %d exceeds maximum (999)" $n) -}}
+{{- else if and (ge $n 999) $ctx.Values.elasticsearch.enabled -}}
+  {{- fail (printf "transform index %d is reserved (999 = elasticsearch output); set elasticsearch.enabled=false to use this slot" $n) -}}
 {{- end -}}
 {{- end }}
 
 {{/*
-Build the full sorted list of pipeline config sources: inputs (index 1),
-user-defined transforms, and outputs (index 999). Uses insertion sort on
-.index. Emits a YAML array of {index, configMap} — parse with fromYamlArray.
+Build the full sorted list of pipeline config sources: kafka input (index 1, when enabled),
+user-defined transforms, and elasticsearch output (index 999, when enabled). Uses insertion
+sort on .index. Emits a YAML array of {index, configMap} — parse with fromYamlArray.
 Call with (list . transforms): {{ include "logstash.pipelineSources" (list . .Values.pipeline.transforms) }}
 */}}
 {{- define "logstash.pipelineSources" -}}
 {{- $ctx := index . 0 -}}
 {{- $transforms := index . 1 -}}
 {{- $release := $ctx.Release.Name -}}
-{{- $combined := list (dict "index" 1 "configMap" (printf "%s-inputs" $release)) -}}
+{{- $combined := list -}}
+{{- if $ctx.Values.kafka.enabled -}}
+  {{- $combined = append $combined (dict "index" 1 "configMap" (printf "%s-kafka-input" $release)) -}}
+{{- end -}}
 {{- range $transforms }}
 {{- $combined = append $combined (dict "index" (int .index) "configMap" .configMap) }}
 {{- end }}
-{{- $combined = append $combined (dict "index" 999 "configMap" (printf "%s-outputs" $release)) }}
+{{- if $ctx.Values.elasticsearch.enabled -}}
+  {{- $combined = append $combined (dict "index" 999 "configMap" (printf "%s-elasticsearch-output" $release)) -}}
+{{- end -}}
 {{- $sorted := list -}}
 {{- range $a := $combined -}}
   {{- $inserted := false -}}

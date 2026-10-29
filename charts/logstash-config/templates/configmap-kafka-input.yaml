@@ -1,9 +1,10 @@
+{{- if .Values.kafka.enabled }}
 {{- $prefix := .Values.pipeline.prefix -}}
 {{- $filename := printf "%s-%s-inputs.conf" $prefix (include "logstash.pad3" 1) -}}
 apiVersion: v1
 kind: ConfigMap
 metadata:
-  name: {{ .Release.Name }}-inputs
+  name: {{ .Release.Name }}-kafka-input
   namespace: {{ .Values.namespace }}
   labels:
     {{- include "logstash.labels" . | nindent 4 }}
@@ -34,3 +35,4 @@ data:
 {{- end }}
         }
     }
+{{- end }}

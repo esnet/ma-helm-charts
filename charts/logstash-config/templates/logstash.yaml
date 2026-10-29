@@ -84,6 +84,7 @@ spec:
               valueFrom:
                 fieldRef:
                   fieldPath: metadata.name
+{{- if .Values.kafka.enabled }}
             - name: kafka_input_bootstrap_servers
               value: {{ .Values.kafka.bootstrapServers | quote }}
             - name: kafka_input_topic
@@ -98,6 +99,7 @@ spec:
               value: {{ .Values.kafka.maxPollRecords | quote }}
             - name: kafka_input_max_poll_interval_ms
               value: {{ .Values.kafka.maxPollIntervalMs | quote }}
+{{- end }}
             - name: LS_JAVA_OPTS
               value: "-Xms{{ .Values.jvm.xms }} -Xmx{{ .Values.jvm.xmx }} -XX:+UseG1GC -Djava.awt.headless=true -Dfile.encoding=UTF-8 -Djruby.compile.invokedynamic=true -XX:+HeapDumpOnOutOfMemoryError"
           envFrom:

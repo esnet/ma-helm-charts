@@ -11,26 +11,106 @@ This chart does NOT create a Secret or ExternalSecret. A Secret named
 "{{ .Values.namespace }}" before this release syncs — provision it via an
 ExternalSecret (or equivalent) in the consuming overlay.
 
+{{- $needsSecret := false }}
+{{- if or .Values.kafka.enabled .Values.elasticsearch.enabled .Values.monitoring.metricbeat.enabled }}
+{{- $needsSecret = true }}
+{{- end }}
+{{- if $needsSecret }}
 Required keys in the Secret:
+{{- if .Values.kafka.enabled }}
   kafka_input_sasl_username   — Kafka SASL username
   kafka_input_sasl_password   — Kafka SASL password
+{{- end }}
+{{- if .Values.elasticsearch.enabled }}
   elastic_user                — Elasticsearch username
   elastic_password            — Elasticsearch password
+{{- end }}
+{{- if .Values.monitoring.metricbeat.enabled }}
+  monitor_es_username         — Stack Monitoring Elasticsearch username
+  monitor_es_password         — Stack Monitoring Elasticsearch password
+{{- end }}
+{{- else }}
+No Secret keys are required by this chart's built-in components. If your
+custom input/output pipeline config references credentials, manage those
+in a Secret and inject them via envFrom or volumeMounts in extraResources.
+{{- end }}
 
 Pipeline Load Order
 -------------------
 Logstash loads pipeline config files in lexicographic order by filename.
 This chart enforces a 3-digit zero-padded naming scheme:
 
-  {{ .Values.pipeline.prefix }}-001-inputs.conf     ← rendered by this chart (fixed slot)
+{{- if .Values.kafka.enabled }}
+  {{ .Values.pipeline.prefix }}-001-inputs.conf     ← Kafka input (rendered by this chart)
+{{- else }}
+  001  ← free slot; provide your own input (see "Bring Your Own Input/Output" below)
+{{- end }}
 {{- range .Values.pipeline.transforms }}
   {{ $.Values.pipeline.prefix }}-{{ include "logstash.pad3" .index }}-<transform>.conf  ← ConfigMap: {{ .configMap }}
 {{- end }}
-  {{ .Values.pipeline.prefix }}-999-outputs.conf    ← rendered by this chart (fixed slot)
+{{- if .Values.elasticsearch.enabled }}
+  {{ .Values.pipeline.prefix }}-999-outputs.conf    ← Elasticsearch output (rendered by this chart)
+{{- else }}
+  999  ← free slot; provide your own output (see "Bring Your Own Input/Output" below)
+{{- end }}
 
 Transform ConfigMaps (indices 002–998) must be provided via extraResources in the
 overlay and listed under pipeline.transforms in values. Indices outside this range
-will cause a hard failure at render time.
+will cause a hard failure at render time — unless the corresponding built-in is
+disabled (kafka.enabled=false unlocks index 1; elasticsearch.enabled=false unlocks index 999).
+
+{{- if or (not .Values.kafka.enabled) (not .Values.elasticsearch.enabled) }}
+
+Bring Your Own Input/Output
+----------------------------
+{{- if not .Values.kafka.enabled }}
+kafka.enabled is false — the built-in Kafka input is not rendered.
+{{- end }}
+{{- if not .Values.elasticsearch.enabled }}
+elasticsearch.enabled is false — the built-in Elasticsearch output is not rendered.
+{{- end }}
+
+To supply your own input or output, choose one of these patterns:
+
+Pattern A — extraResources (raw ConfigMap in the overlay values):
+
+  extraResources:
+    - apiVersion: v1
+      kind: ConfigMap
+      metadata:
+        name: {{ .Release.Name }}-my-input
+        namespace: {{ .Values.namespace }}
+      data:
+        {{ .Values.pipeline.prefix }}-001-inputs.conf: |
+          input {
+            # your input plugin config here
+          }
+
+  Then reference it under pipeline.transforms:
+
+  pipeline:
+    transforms:
+      - index: 1
+        configMap: {{ .Release.Name }}-my-input
+
+Pattern B — external ConfigMap (managed separately in the overlay):
+
+  Create the ConfigMap via a separate manifest or ExternalSecret, then
+  reference it in pipeline.transforms exactly as in Pattern A.
+
+Config file naming convention:
+  <prefix>-<index>-<description>.conf
+  By convention, use index 001 for inputs and 999 for outputs to preserve
+  the input → transform → output ordering, but the chart does not enforce this.
+  The chart mounts each transform into its own directory under
+  /usr/share/logstash/pipeline/custom/<index>/ and Logstash picks
+  them all up via path.config glob.
+
+Credentials for custom plugins:
+  Add any required keys to the Secret named "{{ .Values.credentials.secretName }}"
+  (already injected via envFrom), or mount an additional Secret as a volume
+  via extraResources and reference it in your pipeline config.
+{{- end }}
 
 ECK Operator
 ------------

@@ -56,7 +56,12 @@ pipeline:
   transforms: []
 
 # Elasticsearch output configuration
+# Set enabled: false to disable the built-in Elasticsearch output ConfigMap entirely.
+# When false, slot 999 is free — provide your own output via pipeline.transforms
+# (index 999 becomes valid) or via extraResources with the appropriate filename.
+# See Pipeline Load Order in NOTES.txt for the naming convention.
 elasticsearch:
+  enabled: true
   # List of Elasticsearch host URLs
   # Example:
   # hosts:
@@ -109,6 +114,11 @@ tlsCertExtractor:
 
 # Kafka input configuration
 kafka:
+  # Set false to disable the built-in Kafka input ConfigMap entirely.
+  # When false, slot 001 is free — provide your own input via pipeline.transforms
+  # (index 1 becomes valid) or via extraResources with the appropriate filename.
+  # See Pipeline Load Order in NOTES.txt for the naming convention.
+  enabled: true
   bootstrapServers: ""
   topic: ""
   # group_id for this consumer — should be unique per pipeline/environment
@@ -141,11 +151,7 @@ kafka:
 # managed in the consuming overlay). It is injected into the Logstash
 # container with envFrom.
 #
-# Required keys in the Secret:
-#   kafka_input_sasl_username   — Kafka SASL username
-#   kafka_input_sasl_password   — Kafka SASL password
-#   elastic_user                 — Elasticsearch username
-#   elastic_password             — Elasticsearch password
+# Required keys depend on which built-in components are enabled — see NOTES.txt.
 credentials:
   # Name of the pre-existing Secret to reference via envFrom.
   secretName: ""

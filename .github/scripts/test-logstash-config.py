@@ -174,7 +174,7 @@ SCENARIOS: list[dict[str, Any]] = [
         "present": ["Logstash"],
         "absent": [],
         "fields": [],
-        "pipeline_volume_order": ["test-release-inputs", "bmp-initial-format", "bmp-afi-safi", "bmp-dns", "test-release-outputs"],
+        "pipeline_volume_order": ["test-release-kafka-input", "bmp-initial-format", "bmp-afi-safi", "bmp-dns", "test-release-elasticsearch-output"],
     },
     # ------------------------------------------------------------------
     # Transforms declared out-of-order are sorted by index in pipeline volumes
@@ -185,7 +185,7 @@ SCENARIOS: list[dict[str, Any]] = [
         "present": ["Logstash"],
         "absent": [],
         "fields": [],
-        "pipeline_volume_order": ["test-release-inputs", "bmp-initial-format", "bmp-afi-safi", "bmp-dns", "test-release-outputs"],
+        "pipeline_volume_order": ["test-release-kafka-input", "bmp-initial-format", "bmp-afi-safi", "bmp-dns", "test-release-elasticsearch-output"],
     },
     # ------------------------------------------------------------------
     # Multi-host ES — all hosts appear in outputs ConfigMap
@@ -609,7 +609,7 @@ SCENARIOS: list[dict[str, Any]] = [
             "--set", "pipeline.transforms[0].index=1",
             "--set", "pipeline.transforms[0].configMap=bad-cm",
         ],
-        "helm_fail": "transform index 1 is reserved (001 = inputs)",
+        "helm_fail": "transform index 1 is reserved (001 = kafka input)",
     },
     # ------------------------------------------------------------------
     # Hard-fail: transform index 999 is reserved (outputs slot)
@@ -621,7 +621,7 @@ SCENARIOS: list[dict[str, Any]] = [
             "--set", "pipeline.transforms[0].index=999",
             "--set", "pipeline.transforms[0].configMap=bad-cm",
         ],
-        "helm_fail": "transform index 999 is reserved (999 = outputs)",
+        "helm_fail": "transform index 999 is reserved (999 = elasticsearch output)",
     },
     # ------------------------------------------------------------------
     # Hard-fail: transform index exceeds 3-digit max
@@ -633,7 +633,7 @@ SCENARIOS: list[dict[str, Any]] = [
             "--set", "pipeline.transforms[0].index=1000",
             "--set", "pipeline.transforms[0].configMap=bad-cm",
         ],
-        "helm_fail": "reserved (999 = outputs)",
+        "helm_fail": "exceeds maximum (999)",
     },
 ]
 
