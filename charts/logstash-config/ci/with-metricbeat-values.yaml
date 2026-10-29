@@ -1,0 +1,40 @@
+namespace: bmp-pipeline
+create_ns: false
+
+image:
+  repository: docker.elastic.co/logstash/logstash
+  tag: "9.5.5"
+
+replicas: 1
+
+pipeline:
+  prefix: bmp
+  transforms: []
+
+elasticsearch:
+  hosts:
+    - "https://el.staging:9200"
+  index: stardust_bmp
+
+kafka:
+  bootstrapServers: "kafka.staging:9092"
+  topic: stardust_bmp
+  groupId: logstash-bmp-staging
+
+credentials:
+  secretName: bmp-pipeline-credentials
+
+monitoring:
+  metricbeat:
+    enabled: true
+    image: "docker.elastic.co/beats/metricbeat"
+    imageTag: "8.19.8"  # override: prod uses 8.x, chart default is 9.5.5
+    clusterName: "bmp-staging"
+    elasticsearchHost: "https://el.gc1.mgt.stardust.es.net:9200"
+    period: "10s"
+    resources:
+      limits:
+        memory: 500Mi
+      requests:
+        cpu: 250m
+        memory: 250Mi

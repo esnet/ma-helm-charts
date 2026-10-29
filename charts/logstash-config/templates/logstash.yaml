@@ -1,0 +1,216 @@
+{{/* Validate all transform indices before rendering */}}
+{{- range .Values.pipeline.transforms }}
+{{- include "logstash.validateTransformIndex" (list $ .index) }}
+{{- end }}
+apiVersion: logstash.k8s.elastic.co/v1alpha1
+kind: Logstash
+metadata:
+  name: {{ .Release.Name }}
+  namespace: {{ .Values.namespace }}
+  labels:
+    {{- include "logstash.labels" . | nindent 4 }}
+spec:
+  count: {{ .Values.replicas }}
+  version: {{ .Values.elasticVersion | quote }}
+  image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+
+  pipelines:
+    - pipeline.id: main
+      path.config: "/usr/share/logstash/pipeline/custom/**/*.conf"
+
+  podTemplate:
+    spec:
+{{- if .Values.tlsCertExtractor.enabled }}
+      initContainers:
+        - name: tls-cert-extractor
+          image: {{ .Values.tlsCertExtractor.image | quote }}
+          command:
+            - sh
+            - -c
+            - |
+              set -eo pipefail
+              HOST={{ .Values.tlsCertExtractor.host | quote }}
+              PORT={{ .Values.tlsCertExtractor.port }}
+              OUT={{ .Values.tlsCertExtractor.outputPath }}
+              NAME={{ .Values.tlsCertExtractor.certFileName }}
+              mkdir -p "${OUT}"
+              echo "[tls-cert-extractor] Extracting TLS cert chain from ${HOST}:${PORT}..."
+              openssl s_client -connect "${HOST}:${PORT}" -showcerts </dev/null 2>/dev/null \
+                | sed -n '/-----BEGIN CERTIFICATE-----/,/-----END CERTIFICATE-----/p' \
+                > "${OUT}/${NAME}.pem"
+              if [ ! -s "${OUT}/${NAME}.pem" ]; then
+                echo "[tls-cert-extractor] ERROR: extracted PEM is empty — check host/port and network connectivity"
+                exit 1
+              fi
+              CERT_COUNT=$(grep -c 'BEGIN CERTIFICATE' "${OUT}/${NAME}.pem")
+              CERT_BYTES=$(wc -c < "${OUT}/${NAME}.pem")
+              echo "[tls-cert-extractor] PEM written to ${OUT}/${NAME}.pem (${CERT_BYTES} bytes, ${CERT_COUNT} cert(s) in chain)"
+              chmod 644 "${OUT}/${NAME}.pem"
+              echo "[tls-cert-extractor] Splitting chain and importing into PKCS12 truststore..."
+              # Split the multi-cert PEM into individual files — keytool requires one cert per import
+              awk '/BEGIN CERTIFICATE/{n++; f=sprintf("%s/cert-%d.pem", out, n)} n{print > f}' \
+                out="${OUT}" "${OUT}/${NAME}.pem"
+              IMPORTED=0
+              for CERT_FILE in "${OUT}"/cert-*.pem; do
+                ALIAS=$(basename "${CERT_FILE}" .pem)
+                keytool -importcert \
+                  -file "${CERT_FILE}" \
+                  -keystore "${OUT}/${NAME}.p12" \
+                  -storetype PKCS12 \
+                  -storepass {{ .Values.tlsCertExtractor.pkcs12Password | quote }} \
+                  -alias "${ALIAS}" \
+                  -noprompt
+                echo "[tls-cert-extractor] Imported ${ALIAS} (TrustedCertificateEntry)"
+                IMPORTED=$((IMPORTED + 1))
+              done
+              chmod 644 "${OUT}/${NAME}.p12"
+              echo "[tls-cert-extractor] PKCS12 truststore written to ${OUT}/${NAME}.p12 (${IMPORTED} trusted cert(s))"
+              echo "[tls-cert-extractor] TLS cert extraction complete."
+          volumeMounts:
+            - name: tls-certs
+              mountPath: {{ .Values.tlsCertExtractor.outputPath | quote }}
+{{- end }}
+      containers:
+        - name: logstash
+          resources:
+            requests:
+              memory: {{ .Values.resources.requests.memory }}
+              cpu: {{ .Values.resources.requests.cpu | quote }}
+            limits:
+              memory: {{ .Values.resources.limits.memory }}
+              cpu: {{ .Values.resources.limits.cpu | quote }}
+          env:
+            - name: pod_name
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+{{- if .Values.kafka.enabled }}
+            - name: kafka_input_bootstrap_servers
+              value: {{ .Values.kafka.bootstrapServers | quote }}
+            - name: kafka_input_topic
+              value: {{ .Values.kafka.topic | quote }}
+            - name: kafka_input_group_id
+              value: {{ .Values.kafka.groupId | quote }}
+            - name: kafka_input_auto_offset_reset
+              value: {{ .Values.kafka.autoOffsetReset | quote }}
+            - name: kafka_input_consumer_threads
+              value: {{ .Values.kafka.consumerThreads | quote }}
+            - name: kafka_input_max_poll_records
+              value: {{ .Values.kafka.maxPollRecords | quote }}
+            - name: kafka_input_max_poll_interval_ms
+              value: {{ .Values.kafka.maxPollIntervalMs | quote }}
+{{- end }}
+            - name: LS_JAVA_OPTS
+              value: "-Xms{{ .Values.jvm.xms }} -Xmx{{ .Values.jvm.xmx }} -XX:+UseG1GC -Djava.awt.headless=true -Dfile.encoding=UTF-8 -Djruby.compile.invokedynamic=true -XX:+HeapDumpOnOutOfMemoryError"
+          envFrom:
+            - secretRef:
+                name: {{ .Values.credentials.secretName }}
+{{- if and .Values.tlsCertExtractor.enabled .Values.tlsCertExtractor.livenessProbe.enabled }}
+          livenessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - |
+                  HOST={{ .Values.tlsCertExtractor.host | quote }}
+                  PORT={{ .Values.tlsCertExtractor.port }}
+                  PEM={{ .Values.tlsCertExtractor.outputPath }}/{{ .Values.tlsCertExtractor.certFileName }}.pem
+                  # If the broker is unreachable, treat as healthy — we can't determine cert state
+                  LIVE=$(openssl s_client -connect "${HOST}:${PORT}" -showcerts </dev/null 2>/dev/null \
+                    | sed -n '/-----BEGIN CERTIFICATE-----/,/-----END CERTIFICATE-----/p')
+                  [ -z "${LIVE}" ] && exit 0
+                  # Split the live chain into individual cert files; find the CA (self-signed: subject == issuer).
+                  # openssl x509 reads only the first cert from a multi-cert PEM — must split first.
+                  echo "${LIVE}" | awk '/-----BEGIN CERTIFICATE-----/{cert=""} {cert=cert $0 "\n"} /-----END CERTIFICATE-----/{print cert > "/tmp/probe-cert-" ++n ".pem"}'
+                  LIVE_CA_FP=""
+                  for f in /tmp/probe-cert-*.pem; do
+                    subj=$(openssl x509 -noout -subject -in "${f}" 2>/dev/null)
+                    issr=$(openssl x509 -noout -issuer  -in "${f}" 2>/dev/null)
+                    if [ "${subj}" = "${issr}" ]; then
+                      LIVE_CA_FP=$(openssl x509 -noout -fingerprint -sha256 -in "${f}" 2>/dev/null | head -1)
+                      break
+                    fi
+                  done
+                  # Split the on-disk chain the same way
+                  awk '/-----BEGIN CERTIFICATE-----/{cert=""} {cert=cert $0 "\n"} /-----END CERTIFICATE-----/{print cert > "/tmp/disk-cert-" ++n ".pem"}' "${PEM}"
+                  DISK_CA_FP=""
+                  for f in /tmp/disk-cert-*.pem; do
+                    subj=$(openssl x509 -noout -subject -in "${f}" 2>/dev/null)
+                    issr=$(openssl x509 -noout -issuer  -in "${f}" 2>/dev/null)
+                    if [ "${subj}" = "${issr}" ]; then
+                      DISK_CA_FP=$(openssl x509 -noout -fingerprint -sha256 -in "${f}" 2>/dev/null | head -1)
+                      break
+                    fi
+                  done
+                  # Fail safe if no CA found in live chain; pass only on confirmed match
+                  [ -n "${LIVE_CA_FP}" ] && [ "${LIVE_CA_FP}" = "${DISK_CA_FP}" ] && exit 0 || exit 1
+            initialDelaySeconds: {{ .Values.tlsCertExtractor.livenessProbe.initialDelaySeconds }}
+            periodSeconds: {{ .Values.tlsCertExtractor.livenessProbe.periodSeconds }}
+            timeoutSeconds: {{ .Values.tlsCertExtractor.livenessProbe.timeoutSeconds }}
+            failureThreshold: {{ .Values.tlsCertExtractor.livenessProbe.failureThreshold }}
+{{- end }}
+          volumeMounts:
+            {{- include "logstash.pipelineVolumeMounts" (list . .Values.pipeline.transforms) | nindent 12 }}
+{{- if .Values.tlsCertExtractor.enabled }}
+            - name: tls-certs
+              mountPath: {{ .Values.tlsCertExtractor.outputPath | quote }}
+              readOnly: true
+{{- end }}
+{{- if .Values.monitoring.metricbeat.enabled }}
+        - name: metricbeat
+          image: "{{ .Values.monitoring.metricbeat.image }}:{{ .Values.monitoring.metricbeat.imageTag }}"
+          args: ["-c", "/etc/metricbeat.yml", "-e"]
+          env:
+            - name: MONITOR_ES_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.credentials.secretName }}
+                  key: monitor_es_username
+            - name: MONITOR_ES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.credentials.secretName }}
+                  key: monitor_es_password
+{{- if .Values.monitoring.metricbeat.clusterName }}
+            - name: CLUSTER_NAME
+              value: {{ .Values.monitoring.metricbeat.clusterName | quote }}
+{{- end }}
+          resources:
+            limits:
+              memory: {{ .Values.monitoring.metricbeat.resources.limits.memory }}
+            requests:
+              cpu: {{ .Values.monitoring.metricbeat.resources.requests.cpu }}
+              memory: {{ .Values.monitoring.metricbeat.resources.requests.memory }}
+          securityContext:
+            runAsUser: 0
+          volumeMounts:
+            - name: metricbeat-config
+              mountPath: /etc/metricbeat.yml
+              subPath: metricbeat.yml
+              readOnly: true
+            - name: metricbeat-data
+              mountPath: /usr/share/metricbeat/data
+{{- end }}
+      volumes:
+        {{- include "logstash.pipelineVolumes" (list . .Values.pipeline.transforms) | nindent 8 }}
+{{- if .Values.tlsCertExtractor.enabled }}
+        - name: tls-certs
+          emptyDir: {}
+{{- end }}
+{{- if .Values.monitoring.metricbeat.enabled }}
+        - name: metricbeat-config
+          configMap:
+            name: {{ .Release.Name }}-metricbeat-config
+            defaultMode: 0640
+        - name: metricbeat-data
+          emptyDir: {}
+{{- end }}
+
+  config:
+    log.level: "info"
+    pipeline.workers: {{ .Values.logstash.workers }}
+    pipeline.batch.size: {{ .Values.logstash.batchSize }}
+    config.reload.automatic: true
+    config.reload.interval: "30s"
+    api.http.host: "0.0.0.0"
+    api.http.port: 9600
