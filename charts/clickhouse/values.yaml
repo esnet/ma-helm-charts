@@ -109,6 +109,12 @@ config:
       default:
         readonly: 0
         max_memory_usage: "10000000000"
+    ## Disable the /play web UI endpoint on the HTTP interface (ports 8123 and 8443).
+    ## When true, a config.d/disable_play.xml is rendered that replaces the default
+    ## http_handlers block, returning 403 for /play while preserving /ping,
+    ## /replicas_status, and query execution handlers.
+    disable_play: false
+
     files:
       ## Key is the filename. Files are placed in config.d/ by default.
       ## Use `directory` to override the target directory for that file.

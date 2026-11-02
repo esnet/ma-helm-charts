@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file.
 
+[0.0.9]
+  - Add `config.ch.disable_play` boolean (default: false). When true, renders
+    `config.d/disable_play.xml` with `replace="1"` on the `http_handlers` block,
+    returning 403 for `/play` while preserving `/ping`, `/replicas_status`, and
+    query execution handlers. Avoids YAML parser mangling of XML in `files.data`
+    block scalars.
+
 [0.0.8]
   - TLSRoutes API version are now configurable. Defaults to v1.
   - Envoy pattern will require +1.8.0 if using v1.

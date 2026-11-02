@@ -1,0 +1,55 @@
+# TLS enabled with HTTPRoutes/TLSRoutes — multi-replica cluster.
+# Exercises route rendering, cert reference, and domain propagation.
+namespace: clickhouse
+
+config:
+  tls:
+    enabled: true
+    routes: true
+    route_api_version: v1
+    cert_name: clickhouse-tls
+
+  clickhouse_version: "25.9"
+  domains:
+    - ch-ci.stardust.es.net
+    - ch-ci-alt.stardust.es.net
+
+  chk:
+    name: keeper-cluster
+    resources:
+      replicasCount: 3
+      disk_volume:
+        size: 20Gi
+      requests:
+        memory: 256M
+        cpu: 1
+      limits:
+        memory: 4Gi
+        cpu: 2
+
+  ch:
+    installation_name: ch-cluster
+    monitoring:
+      enabled: true
+    clusters:
+      ch-cluster:
+        shards: 1
+        replicas: 2
+    users:
+      admin:
+        password_secret:
+          name: clickhouse-users
+          key: admin_password
+        access_management: 1
+    resources:
+      disk_volume:
+        size: 100Gi
+      log_volume:
+        size: 10Gi
+      max_concurrent_queries: 100
+      requests:
+        memory: 8Gi
+        cpu: 2
+      limits:
+        memory: 16Gi
+        cpu: 4

@@ -96,6 +96,41 @@ spec:
 {{ $file.data | indent 8 }}
       {{- end }}
       {{- end }}
+      {{- if .Values.config.ch.disable_play }}
+      config.d/disable_play.xml: |
+        <clickhouse>
+          <!-- /play cannot be blocked at the Gateway: both CH listeners (8443, 9440) use
+               TLS passthrough, so Envoy never sees plaintext paths. Must be done here.
+               replace="1" causes this block to fully replace the http_handlers
+               defined in config.xml, preventing /play from being served.
+               All standard handlers (/ping, /replicas_status, etc.) are
+               re-declared here so they continue to work. -->
+          <http_handlers replace="1">
+            <rule>
+              <url>/ping</url>
+              <handler><type>ping</type></handler>
+            </rule>
+            <rule>
+              <url>/replicas_status</url>
+              <handler><type>replicas_status</type></handler>
+            </rule>
+            <rule>
+              <url>/play</url>
+              <handler>
+                <type>static</type>
+                <status>403</status>
+                <response_content>Forbidden</response_content>
+              </handler>
+            </rule>
+            <rule>
+              <methods>POST,GET</methods>
+              <headers><pragma>no-cache</pragma></headers>
+              <handler><type>dynamic_query_handler</type><query_param_name>query</query_param_name></handler>
+            </rule>
+            <rule><handler><type>static</type><status>400</status><response_content>No query</response_content></handler></rule>
+          </http_handlers>
+        </clickhouse>
+      {{- end }}
 
 {{- if .Values.config.tls.enabled }}
       # TLS configuration
