@@ -51,6 +51,9 @@ jobs:
       - name: Test logstash-config templates
         run: uv run .github/scripts/test-logstash-config.py
 
+      - name: Test kafka-config templates
+        run: uv run .github/scripts/test-kafka-config.py
+
       # - name: Run chart-testing (list-changed)
       #   id: list-changed
       #   run: |
