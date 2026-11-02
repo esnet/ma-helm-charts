@@ -7,12 +7,19 @@ config:
     ## When enabled will generate a httproute
     routes: true
     ## Use in configuring clickhouse TLS connectivity
-    cert_name: tls-cert2
+    cert_name: ""  # required when tls.enabled: true
+    ## Gateway parentRef configuration for TLSRoutes
+    gateway:
+      name: external-http
+      tcp_section: clickhouse-secure
+      https_section: ssl-validation
   ## Clickhouse image tag to use
   clickhouse_version: 25.9
+  ## Image pull policy applied to all containers (clickhouse, clickhouse-keeper, clickhouse-backup).
+  ## IfNotPresent is appropriate for pinned version tags. Use Always during development or with floating tags.
+  imagePullPolicy: IfNotPresent
   ## Used when configuring a tlsroute, feel free to ignore if you're not using the feature
-  domains:
-    - localhost.nip.io
+  domains: []  # required when tls.routes: true
 
   ## Optionally enable a pod to enable backups
   backups:
@@ -27,7 +34,7 @@ config:
     backup_interval: 24h
     full_interval: 168h
     storage: gcs
-    bucket: clickhouse-stardust-staging
+    # bucket: ""  # required when backups.enabled: true and storage: gcs
     backup_path: backup/shard-{shard}
     ## these should point to localhost:9000 but if need be they are exposed as configurable
     # clickhouse_host: localhost.nip.io
@@ -129,26 +136,33 @@ config:
       # New user example — key is the username:
       # myUser:
       #   password_secret:
-      #     name: "clickhouse_users"
+      #     name: "clickhouse-users"
       #     key: "myUser_password"
       #   allowed_ips: "::/0"
       #   profile: "default"
       #   quota: "default"
       #   access_management: "1"
+      #   ## grants renders as <grants><query>...</query></grants> in users.xml.
+      #   ## Each entry is a full GRANT statement. Any valid ClickHouse GRANT syntax is accepted.
+      #   ## NOTE: grants and allow_databases are mutually exclusive — do not use both on the same user.
+      #   grants:
+      #     - "GRANT SHOW DATABASES TO myUser"
+      #     - "GRANT SELECT ON system.clusters TO myUser"
+      #     - "GRANT SELECT,INSERT,ALTER,CREATE TABLE,DROP TABLE,TRUNCATE,OPTIMIZE ON mydb.* TO myUser"
 
       admin:
         password_secret:
-          name: "clickhouse_users"
+          name: "clickhouse-users"
           key: "admin_password"
         access_management: 1
       readonly_user:
         password_secret:
-          name: "clickhouse_users"
+          name: "clickhouse-users"
           key: "readonly_password"
         profile: "readonly"
       backup_user:
         password_secret:
-          name: "clickhouse_users"
+          name: "clickhouse-users"
           key: "backup_password"
         databases:
           - moo
