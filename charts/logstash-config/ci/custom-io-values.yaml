@@ -1,0 +1,27 @@
+# CI fixture: both kafka.enabled and elasticsearch.enabled are false.
+# Simulates a user bringing their own input and output via pipeline.transforms + extraResources.
+namespace: bmp-pipeline
+create_ns: true
+
+image:
+  repository: docker.elastic.co/logstash/logstash
+  tag: "9.5.5"
+
+replicas: 1
+
+pipeline:
+  prefix: bmp
+  transforms:
+    - index: 1
+      configMap: bmp-custom-input
+    - index: 999
+      configMap: bmp-custom-output
+
+kafka:
+  enabled: false
+
+elasticsearch:
+  enabled: false
+
+credentials:
+  secretName: bmp-pipeline-credentials

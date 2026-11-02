@@ -1,0 +1,46 @@
+namespace: bmp-pipeline
+create_ns: false
+
+image:
+  repository: docker.elastic.co/logstash/logstash
+  tag: "9.5.5"
+
+replicas: 1
+
+pipeline:
+  prefix: bmp
+  transforms: []
+
+tlsCertExtractor:
+  enabled: true
+  image: "us-central1-docker.pkg.dev/ma-infrastructure-474617/docker-registry/k8s-cert-helper:1.37.1"
+  host: "kafka.example.com"
+  port: 9095
+  outputPath: "/certs"
+  certFileName: "ca"
+  pkcs12Password: "public-nosecret"
+
+elasticsearch:
+  hosts:
+    - "https://el.staging:9200"
+  index: stardust_bmp
+  cacert: /etc/stardust/pipeline/certificates/elastic.cer
+  sslVerificationMode: none
+
+kafka:
+  bootstrapServers: "kafka.example.com:9095"
+  topic: stardust_bmp
+  groupId: logstash-bmp-staging
+  autoOffsetReset: latest
+  consumerThreads: 1
+  maxPollRecords: 500
+  maxPollIntervalMs: 300000
+  ssl:
+    enabled: true
+    truststoreLocation: "/certs/ca.p12"
+    truststoreType: "PKCS12"
+    truststorePassword: "public-nosecret"
+    endpointIdentificationAlgorithm: ""
+
+credentials:
+  secretName: bmp-pipeline-credentials
