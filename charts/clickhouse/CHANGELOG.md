@@ -2,7 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
+[0.0.10]
+  - Fix `disable_play` HTTP handler: removed the `<headers><pragma>no-cache</pragma></headers>`
+    restriction from the `dynamic_query_handler` rule. The restriction broke standard
+    HTTP clients (Grafana plugin, clickhouse-go driver, etc.) that do not send the
+    `pragma` header, causing `400 No query` errors on valid query requests.
+  - Add `config.ch.disable_play_handlers` value: allows overriding the `<rule>` blocks
+    rendered inside `config.d/disable_play.xml` when `disable_play: true`. Provide the
+    inner rule blocks only — the `<clickhouse>` and `<http_handlers replace="1">` wrapper
+    is always added by the template. Defaults to the standard set: `/ping`,
+    `/replicas_status`, `/play` blocked with 403, and `dynamic_query_handler` for all
+    other POST/GET requests.
+
 [0.0.9]
+  - Remove `allow_experimental_database_replicated` from server config. The setting
+    graduated to stable in ClickHouse 26.x and was removed from `ServerSettings`;
+    26.8+ rejects it with `UNKNOWN_ELEMENT_IN_CONFIG` and fails to start.
   - Add `config.ch.disable_play` boolean (default: false). When true, renders
     `config.d/disable_play.xml` with `replace="1"` on the `http_handlers` block,
     returning 403 for `/play` while preserving `/ping`, `/replicas_status`, and
