@@ -114,6 +114,33 @@ config:
     ## http_handlers block, returning 403 for /play while preserving /ping,
     ## /replicas_status, and query execution handlers.
     disable_play: false
+    ## Override the http_handlers XML rules used when disable_play is true.
+    ## Provide the inner <rule> blocks only — the outer <clickhouse> and
+    ## <http_handlers replace="1"> wrapper are always added by the template.
+    ## Defaults to: /ping, /replicas_status, block /play with 403, allow all
+    ## other POST/GET queries via dynamic_query_handler.
+    disable_play_handlers: |
+      <rule>
+        <url>/ping</url>
+        <handler><type>ping</type></handler>
+      </rule>
+      <rule>
+        <url>/replicas_status</url>
+        <handler><type>replicas_status</type></handler>
+      </rule>
+      <rule>
+        <url>/play</url>
+        <handler>
+          <type>static</type>
+          <status>403</status>
+          <response_content>Forbidden</response_content>
+        </handler>
+      </rule>
+      <rule>
+        <methods>POST,GET</methods>
+        <handler><type>dynamic_query_handler</type><query_param_name>query</query_param_name></handler>
+      </rule>
+      <rule><handler><type>static</type><status>400</status><response_content>No query</response_content></handler></rule>
 
     files:
       ## Key is the filename. Files are placed in config.d/ by default.

@@ -160,6 +160,62 @@ SCENARIOS: list[dict[str, Any]] = [
         "container_env": [],
     },
     # ------------------------------------------------------------------
+    # disable_play — dynamic_query_handler must NOT require pragma header
+    # Regression: handler previously restricted to requests with the
+    # 'pragma: no-cache' header, breaking standard HTTP clients that
+    # don't send it (Grafana plugin, clickhouse-go driver, etc.).
+    # The fix removed the <headers> filter so all POST/GET with a query
+    # param are accepted. Verify no <pragma> block appears in the handler.
+    # ------------------------------------------------------------------
+    {
+        "name": "disable-play-no-pragma-restriction",
+        "values": "ci/disable-play.yaml",
+        "present": ["ClickHouseInstallation"],
+        "absent": [],
+        "fields": [],
+        "chi_files_present": ["disable_play.xml"],
+        "chi_files_absent": [],
+        "chi_file_contains": [
+            ("disable_play.xml", "<type>dynamic_query_handler</type>"),
+        ],
+        "chi_file_not_contains": [
+            ("disable_play.xml", "<pragma>"),
+            ("disable_play.xml", "<headers>"),
+        ],
+        "cluster_fields": [],
+        "container_present": [],
+        "container_absent": [],
+        "container_env": [],
+    },
+    # ------------------------------------------------------------------
+    # disable_play — custom handler override is rendered
+    # Verifies that disable_play_handlers value replaces the default rules.
+    # Custom fixture adds /custom-health and uses "Not allowed" response text.
+    # ------------------------------------------------------------------
+    {
+        "name": "disable-play-custom-handlers",
+        "values": "ci/disable-play-custom-handlers.yaml",
+        "present": ["ClickHouseInstallation"],
+        "absent": [],
+        "fields": [],
+        "chi_files_present": ["disable_play.xml"],
+        "chi_files_absent": [],
+        "chi_file_contains": [
+            ("disable_play.xml", 'replace="1"'),
+            ("disable_play.xml", "<url>/custom-health</url>"),
+            ("disable_play.xml", "<response_content>Not allowed</response_content>"),
+            ("disable_play.xml", "<type>dynamic_query_handler</type>"),
+        ],
+        "chi_file_not_contains": [
+            ("disable_play.xml", "<url>/replicas_status</url>"),
+            ("disable_play.xml", "<response_content>Forbidden</response_content>"),
+        ],
+        "cluster_fields": [],
+        "container_present": [],
+        "container_absent": [],
+        "container_env": [],
+    },
+    # ------------------------------------------------------------------
     # disable_play off by default — disable_play.xml must NOT appear
     # ------------------------------------------------------------------
     {
@@ -416,7 +472,7 @@ def run_scenario(scenario: dict[str, Any], docs: list[dict]) -> None:
                     f"CHI files: '{fname}' must not be present but was found"
                 )
 
-    # --- CHI file content assertions ---
+    # --- CHI file content assertions (must contain) ---
     for fname, substring in scenario.get("chi_file_contains", []):
         try:
             files = get_chi_files(docs)
@@ -428,6 +484,21 @@ def run_scenario(scenario: dict[str, Any], docs: list[dict]) -> None:
         if substring not in content:
             raise AssertionError(
                 f"CHI file '{fname}': expected to contain {substring!r}\n"
+                f"Actual content:\n{content}"
+            )
+
+    # --- CHI file content assertions (must NOT contain) ---
+    for fname, substring in scenario.get("chi_file_not_contains", []):
+        try:
+            files = get_chi_files(docs)
+        except (AssertionError, KeyError) as exc:
+            raise AssertionError(f"could not read CHI files block: {exc}") from exc
+        if fname not in files:
+            raise AssertionError(f"CHI files: '{fname}' not found for content check")
+        content = files[fname]
+        if substring in content:
+            raise AssertionError(
+                f"CHI file '{fname}': must NOT contain {substring!r} but it was found\n"
                 f"Actual content:\n{content}"
             )
 
