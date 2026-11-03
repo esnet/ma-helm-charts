@@ -1,0 +1,70 @@
+# GCS backups with service account workload identity + monitoring enabled.
+# Exercises backup sidecar, env vars, GCS config, and backup monitoring annotations.
+namespace: clickhouse
+
+config:
+  tls:
+    enabled: false
+    routes: false
+    cert_name: tls-cert
+
+  clickhouse_version: "25.9"
+
+  backups:
+    enabled: true
+    version: "2.6.39"
+    monitoring:
+      enabled: true
+    backup_interval: 24h
+    full_interval: 168h
+    storage: gcs
+    bucket: ci-clickhouse-backups
+    backup_path: backup/shard-{shard}
+    retention_policy: 7
+    service_name: clickhouse-backup-sa
+    service_file: {}
+    backups_user:
+      name: admin
+      secret:
+        name: clickhouse-users
+        key: admin_password
+
+  chk:
+    name: keeper-cluster
+    resources:
+      replicasCount: 3
+      disk_volume:
+        size: 20Gi
+      requests:
+        memory: 256M
+        cpu: 1
+      limits:
+        memory: 4Gi
+        cpu: 2
+
+  ch:
+    installation_name: ch-cluster
+    monitoring:
+      enabled: true
+    clusters:
+      ch-cluster:
+        shards: 1
+        replicas: 1
+    users:
+      admin:
+        password_secret:
+          name: clickhouse-users
+          key: admin_password
+        access_management: 1
+    resources:
+      disk_volume:
+        size: 100Gi
+      log_volume:
+        size: 10Gi
+      max_concurrent_queries: 100
+      requests:
+        memory: 8Gi
+        cpu: 2
+      limits:
+        memory: 16Gi
+        cpu: 4
