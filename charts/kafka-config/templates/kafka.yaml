@@ -19,9 +19,6 @@ spec:
         {{- if $listener.authentication }}
         authentication:
           type: {{ $listener.authentication.type }}
-          {{- if $listener.authentication.sasl }}
-          sasl: {{ $listener.authentication.sasl }}
-          {{- end }}
         {{- end }}
         {{- if $listener.configuration }}
         configuration:

@@ -21,7 +21,7 @@ config:
         tls: true
         authentication:
           type: scram-sha-512
-          sasl: true
+
         configuration:
           ipFamilyPolicy: SingleStack
           ipFamilies:
