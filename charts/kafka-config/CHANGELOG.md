@@ -2,6 +2,9 @@
 
 All notable changes to this project will be documented in this file.
 
+[0.0.4]
+ - Removing sasl flag which is not supported by CRDs
+
 [0.0.3]
  - **Breaking:** Removed dual-stack listener support; use separate single-stack listeners for IPv4 and IPv6.
  - **Breaking:** Listener `configuration` block restructured — `staticIpNames` replaced by `configuration.bootstrap.annotations` (free-form map) and `configuration.brokerAnnotations` / `configuration.brokerIpAddresses` (positional list); no explicit broker IDs required.

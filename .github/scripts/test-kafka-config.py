@@ -82,7 +82,6 @@ SCENARIOS: list[dict[str, Any]] = [
             ("extusers", ["port"], 9095),
             ("extusers", ["type"], "loadbalancer"),
             ("extusers", ["authentication", "type"], "scram-sha-512"),
-            ("extusers", ["authentication", "sasl"], True),
             ("extusers", ["configuration", "ipFamilyPolicy"], "SingleStack"),
             ("extusers", ["configuration", "ipFamilies"], ["IPv4"]),
             # bootstrap annotations

@@ -69,7 +69,6 @@ config:
     #   tls             — Whether TLS is enabled on this listener.
     #   authentication  — Optional. Omit for unauthenticated listeners.
     #     type          — `tls` (mTLS cert auth) or `scram-sha-512` (password).
-    #     sasl          — Set to `true` when using SCRAM over TLS.
     #   configuration   — Optional. LoadBalancer-specific settings.
     #     ipFamilyPolicy    — `SingleStack` or `RequireDualStack`.
     #     ipFamilies        — List of IP families (`IPv4`, `IPv6`).
@@ -105,7 +104,6 @@ config:
       #   tls: true
       #   authentication:
       #     type: scram-sha-512
-      #     sasl: true
       #   configuration:
       #     ipFamilyPolicy: SingleStack
       #     ipFamilies:
@@ -129,7 +127,6 @@ config:
       #   tls: true
       #   authentication:
       #     type: scram-sha-512
-      #     sasl: true
       #   configuration:
       #     ipFamilyPolicy: SingleStack
       #     ipFamilies:
@@ -152,7 +149,6 @@ config:
       #   tls: true
       #   authentication:
       #     type: scram-sha-512
-      #     sasl: true
       #   gateway:
       #     name: external-http
       #     sectionName: extusers
