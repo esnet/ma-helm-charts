@@ -42,6 +42,23 @@ CHART = "charts/logstash-config"
 
 SCENARIOS: list[dict[str, Any]] = [
     {
+        # Verifies that multiple Elasticsearch hosts are rendered with commas between
+        # entries in the hosts => [...] array so Logstash can parse the config.
+        "name": "elasticsearch-multi-host-commas",
+        "values": "ci/multi-host-elasticsearch-values.yaml",
+        "present": [],
+        "absent": [],
+        "fields": [],
+        "metricbeat_cm_present": False,
+        "metricsets": [],
+        "absent_metricsets": [],
+        "elasticsearch_hosts": [
+            "https://10.0.0.1:9200",
+            "https://10.0.0.2:9200",
+            "https://10.0.0.3:9200",
+        ],
+    },
+    {
         "name": "metricbeat-disabled",
         "values": "ci/minimal-values.yaml",
         "present": [],
@@ -99,6 +116,51 @@ def deep_get(obj: Any, keys: list[str]) -> Any:
             raise KeyError(f"expected dict at {key!r}, got {type(obj).__name__}")
         obj = obj[key]
     return obj
+
+
+def find_elasticsearch_output_configmap(docs: list[dict]) -> dict | None:
+    for doc in docs:
+        if doc.get("kind") == "ConfigMap" and "elasticsearch-output" in doc.get("metadata", {}).get("name", ""):
+            return doc
+    return None
+
+
+def check_elasticsearch_hosts(docs: list[dict], expected_hosts: list[str]) -> None:
+    """Assert that all expected hosts appear in the ES output ConfigMap and are
+    separated by commas so the Logstash config DSL can parse the array."""
+    cm = find_elasticsearch_output_configmap(docs)
+    if cm is None:
+        raise AssertionError("elasticsearch hosts check: no elasticsearch-output ConfigMap found")
+
+    conf_text = "\n".join(cm.get("data", {}).values())
+
+    for host in expected_hosts:
+        if host not in conf_text:
+            raise AssertionError(
+                f"elasticsearch hosts check: {host!r} not found in rendered config"
+            )
+
+    # Verify that consecutive host entries are comma-separated.
+    # Extract the hosts => [ ... ] block and check that each host (except the last)
+    # is followed by a comma before the next host entry.
+    import re
+    hosts_block_match = re.search(r"hosts\s*=>\s*\[(.*?)\]", conf_text, re.DOTALL)
+    if hosts_block_match is None:
+        raise AssertionError("elasticsearch hosts check: could not find hosts => [...] block")
+
+    hosts_block = hosts_block_match.group(1)
+    # Strip whitespace and split on commas to count parsed entries.
+    entries = [e.strip().strip('"') for e in hosts_block.split(",") if e.strip()]
+    if len(entries) != len(expected_hosts):
+        raise AssertionError(
+            f"elasticsearch hosts check: expected {len(expected_hosts)} comma-separated entries, "
+            f"got {len(entries)}: {entries!r}"
+        )
+    for actual, expected in zip(entries, expected_hosts):
+        if actual != expected:
+            raise AssertionError(
+                f"elasticsearch hosts check: entry mismatch — expected {expected!r}, got {actual!r}"
+            )
 
 
 def find_metricbeat_configmap(docs: list[dict]) -> dict | None:
@@ -162,6 +224,9 @@ def run_scenario(scenario: dict[str, Any], docs: list[dict]) -> None:
             raise AssertionError(
                 f"{kind}.{path_label}: expected {expected!r}, got {actual!r}"
             )
+
+    if "elasticsearch_hosts" in scenario:
+        check_elasticsearch_hosts(docs, scenario["elasticsearch_hosts"])
 
     if "metricbeat_cm_present" in scenario:
         cm = find_metricbeat_configmap(docs)

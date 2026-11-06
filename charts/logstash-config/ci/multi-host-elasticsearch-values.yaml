@@ -1,0 +1,29 @@
+# CI fixture: multiple Elasticsearch hosts — exercises comma-separated host list rendering.
+namespace: bmp-pipeline
+create_ns: false
+
+image:
+  repository: docker.elastic.co/logstash/logstash
+  tag: "9.5.5"
+
+replicas: 1
+
+pipeline:
+  prefix: bmp
+  transforms: []
+
+elasticsearch:
+  hosts:
+    - "https://10.0.0.1:9200"
+    - "https://10.0.0.2:9200"
+    - "https://10.0.0.3:9200"
+  index: stardust_bmp
+  sslVerificationMode: none
+
+kafka:
+  bootstrapServers: "kafka.example.com:9092"
+  topic: stardust_bmp
+  groupId: logstash-bmp-ci
+
+credentials:
+  secretName: bmp-pipeline-credentials
