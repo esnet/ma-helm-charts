@@ -13,8 +13,9 @@ data:
     output {
         elasticsearch {
             hosts => [
-    {{- range .Values.elasticsearch.hosts }}
-                "{{ . }}"
+    {{- range $i, $host := .Values.elasticsearch.hosts }}
+    {{- if $i }},{{ end }}
+                "{{ $host }}"
     {{- end }}
             ]
             ssl_enabled => true

@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.0.2]
+
+### Fixed
+- Elasticsearch `hosts => [...]` array in the output ConfigMap was missing commas between entries when multiple hosts were configured, causing a Logstash `ConfigurationError` at startup
+
 ## [0.0.1]
 
 ### Added
