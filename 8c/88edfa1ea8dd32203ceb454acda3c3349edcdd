@@ -1,0 +1,24 @@
+charts/kafka-config/CHANGELOG.md
+  h_5c3111fc5355aa 5-7
+charts/kafka-config/Chart.yaml
+  h_5c3111fc5355aa 4
+charts/kafka-config/ci/broker-scaling-values.yaml
+  h_5c3111fc5355aa 24
+charts/kafka-config/ci/extusers-ipv4-values.yaml
+  h_5c3111fc5355aa 24
+charts/kafka-config/ci/extusers-ipv6-values.yaml
+  h_5c3111fc5355aa 26
+charts/kafka-config/ci/no-broker-ips-values.yaml
+  h_5c3111fc5355aa 25
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "8c88edfa1ea8dd32203ceb454acda3c3349edcdd",
+  "prompts": {},
+  "humans": {
+    "h_5c3111fc5355aa": {
+      "author": "Samir Faci <samir@es.net>"
+    }
+  }
+}
