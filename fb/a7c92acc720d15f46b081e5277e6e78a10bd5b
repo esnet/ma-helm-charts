@@ -1,0 +1,22 @@
+.github/scripts/test-logstash-config.py
+  h_5c3111fc5355aa 44-60,121-165,228-230
+charts/logstash-config/CHANGELOG.md
+  h_5c3111fc5355aa 3-7
+charts/logstash-config/Chart.yaml
+  h_5c3111fc5355aa 4
+charts/logstash-config/ci/multi-host-elasticsearch-values.yaml
+  h_5c3111fc5355aa 1-29
+charts/logstash-config/templates/configmap-elasticsearch-output.yaml
+  h_5c3111fc5355aa 16-18
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "fba7c92acc720d15f46b081e5277e6e78a10bd5b",
+  "prompts": {},
+  "humans": {
+    "h_5c3111fc5355aa": {
+      "author": "Samir Faci <samir@es.net>"
+    }
+  }
+}
