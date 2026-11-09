@@ -1,0 +1,24 @@
+.github/scripts/test-clickhouse.py
+  h_5c3111fc5355aa 25-28,324-418,523-536,675-724
+charts/clickhouse/CHANGELOG.md
+  h_5c3111fc5355aa 5-19
+charts/clickhouse/Chart.yaml
+  h_5c3111fc5355aa 4
+charts/clickhouse/ci/migrations-enabled.yaml
+  h_5c3111fc5355aa 1-54
+charts/clickhouse/templates/ch.yml
+  h_5c3111fc5355aa 280-306
+charts/clickhouse/values.yaml
+  h_5c3111fc5355aa 207-229
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "df67655ce498e14ad39dec01a971d23073628a0c",
+  "prompts": {},
+  "humans": {
+    "h_5c3111fc5355aa": {
+      "author": "Samir Faci <samir@es.net>"
+    }
+  }
+}
