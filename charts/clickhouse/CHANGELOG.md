@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file.
 
+[0.0.11]
+  - Add `config.migrations` block: optional native sidecar (`initContainer` with
+    `restartPolicy: Never`) that runs `goose-wrapper` on every pod restart.
+  - `config.migrations.enabled` (default: `false`) gates the sidecar — disabled by
+    default so existing deployments are unaffected.
+  - `config.migrations.target` (required when enabled): selects the migrations
+    subdirectory inside the image (e.g. `stardust-std`).
+  - `config.migrations.keeperAddr`: override for the Keeper address. Defaults to
+    `keeper-<chk.name>.<namespace>.svc.cluster.local:2181` (the aggregate headless
+    service that selects all ready Keeper pods).
+  - `CLICKHOUSE_HOST`, `CLICKHOUSE_USERNAME`, and `CLICKHOUSE_PASSWORD` are inherited
+    from the pod environment — no additional secret wiring required.
+  - `config.migrations.gooseCommand`, `migrationsDir`, `sleepSeconds`, and `resources`
+    are all configurable with sensible defaults.
+
 [0.0.10]
   - Fix `disable_play` HTTP handler: removed the `<headers><pragma>no-cache</pragma></headers>`
     restriction from the `dynamic_query_handler` rule. The restriction broke standard

@@ -277,6 +277,33 @@ spec:
               secret:
                 secretName: {{ .Values.config.tls.cert_name }}
 {{- end }}
+{{- if .Values.config.migrations.enabled }}
+{{- if eq (.Values.config.migrations.target | default "") "" }}
+{{- fail "config.migrations.target is required when config.migrations.enabled is true" }}
+{{- end }}
+          initContainers:
+            - name: clickhouse-migrations
+              image: {{ .Values.config.migrations.image.repository }}:{{ .Values.config.migrations.image.tag }}
+              restartPolicy: Never
+              env:
+                - name: TARGET
+                  value: {{ .Values.config.migrations.target | quote }}
+                - name: KEEPER_ADDR
+                  value: {{ .Values.config.migrations.keeperAddr | default (printf "keeper-%s.%s.svc.cluster.local:2181" .Values.config.chk.name .Values.namespace) | quote }}
+                - name: GOOSE_COMMAND
+                  value: {{ .Values.config.migrations.gooseCommand | default "up" | quote }}
+                - name: MIGRATIONS_DIR
+                  value: {{ .Values.config.migrations.migrationsDir | default "/migrations" | quote }}
+                - name: MIGRATION_SLEEP_SECONDS
+                  value: {{ .Values.config.migrations.sleepSeconds | default 60 | quote }}
+              resources:
+                requests:
+                  cpu: {{ .Values.config.migrations.resources.requests.cpu }}
+                  memory: {{ .Values.config.migrations.resources.requests.memory }}
+                limits:
+                  cpu: {{ .Values.config.migrations.resources.limits.cpu }}
+                  memory: {{ .Values.config.migrations.resources.limits.memory }}
+{{- end }}
 
     volumeClaimTemplates:
       - name: data-volume

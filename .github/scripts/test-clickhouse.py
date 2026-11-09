@@ -22,6 +22,10 @@ Each scenario in SCENARIOS is a self-contained declaration of:
   - container_present  — container names that must appear in the pod template
   - container_absent   — container names that must NOT appear in the pod template
   - container_env      — (container_name, env_var_name, expected_value)
+  - initcontainer_present — init container names that must appear in the pod template
+  - initcontainer_absent  — init container names that must NOT appear in the pod template
+  - initcontainer_env     — (container_name, env_var_name, expected_value)
+  - initcontainer_env_absent — (container_name, env_var_name) env var must NOT be set explicitly
   - known_failure      — if set, the scenario is expected to fail (XFAIL)
 
 To add a scenario, edit SCENARIOS only — the engine below does not change.
@@ -317,6 +321,101 @@ SCENARIOS: list[dict[str, Any]] = [
         "user_db_check": ("admin", None),
     },
     # ------------------------------------------------------------------
+    # Migrations disabled by default — no initContainer rendered
+    # ------------------------------------------------------------------
+    {
+        "name": "migrations-disabled-by-default",
+        "values": "ci/minimal-values.yaml",
+        "present": ["ClickHouseInstallation"],
+        "absent": [],
+        "fields": [],
+        "chi_files_present": [],
+        "chi_files_absent": [],
+        "chi_file_contains": [],
+        "cluster_fields": [],
+        "container_present": [],
+        "container_absent": [],
+        "container_env": [],
+        "initcontainer_absent": ["clickhouse-migrations"],
+    },
+    # ------------------------------------------------------------------
+    # Migrations enabled — initContainer present with correct env vars
+    # and default computed keeper address
+    # ------------------------------------------------------------------
+    {
+        "name": "migrations-enabled-defaults",
+        "values": "ci/migrations-enabled.yaml",
+        "present": ["ClickHouseInstallation"],
+        "absent": [],
+        "fields": [],
+        "chi_files_present": [],
+        "chi_files_absent": [],
+        "chi_file_contains": [],
+        "cluster_fields": [],
+        "container_present": ["clickhouse"],
+        "container_absent": [],
+        "container_env": [],
+        "initcontainer_present": ["clickhouse-migrations"],
+        "initcontainer_env": [
+            ("clickhouse-migrations", "TARGET", "stardust-std"),
+            ("clickhouse-migrations", "KEEPER_ADDR", "keeper-keeper-cluster.clickhouse.svc.cluster.local:2181"),
+            ("clickhouse-migrations", "GOOSE_COMMAND", "up"),
+            ("clickhouse-migrations", "MIGRATIONS_DIR", "/migrations"),
+            ("clickhouse-migrations", "MIGRATION_SLEEP_SECONDS", "60"),
+        ],
+        # credentials must NOT be set — they are inherited from the pod env
+        "initcontainer_env_absent": [
+            ("clickhouse-migrations", "CLICKHOUSE_USERNAME"),
+            ("clickhouse-migrations", "CLICKHOUSE_PASSWORD"),
+            ("clickhouse-migrations", "CLICKHOUSE_HOST"),
+        ],
+    },
+    # ------------------------------------------------------------------
+    # Migrations enabled — custom keeperAddr override is respected
+    # ------------------------------------------------------------------
+    {
+        "name": "migrations-custom-keeper-addr",
+        "values": "ci/migrations-enabled.yaml",
+        "extra_set": [
+            "--set", "config.migrations.keeperAddr=my-keeper.other-ns.svc.cluster.local:2181",
+        ],
+        "present": ["ClickHouseInstallation"],
+        "absent": [],
+        "fields": [],
+        "chi_files_present": [],
+        "chi_files_absent": [],
+        "chi_file_contains": [],
+        "cluster_fields": [],
+        "container_present": [],
+        "container_absent": [],
+        "container_env": [],
+        "initcontainer_present": ["clickhouse-migrations"],
+        "initcontainer_env": [
+            ("clickhouse-migrations", "KEEPER_ADDR", "my-keeper.other-ns.svc.cluster.local:2181"),
+        ],
+    },
+    # ------------------------------------------------------------------
+    # Migrations enabled without target — helm template must fail
+    # ------------------------------------------------------------------
+    {
+        "name": "migrations-missing-target",
+        "values": "ci/minimal-values.yaml",
+        "extra_set": [
+            "--set", "config.migrations.enabled=true",
+        ],
+        "present": [],
+        "absent": [],
+        "fields": [],
+        "chi_files_present": [],
+        "chi_files_absent": [],
+        "chi_file_contains": [],
+        "cluster_fields": [],
+        "container_present": [],
+        "container_absent": [],
+        "container_env": [],
+        "known_failure": "helm template must fail when migrations.enabled=true and target is empty",
+    },
+    # ------------------------------------------------------------------
     # Node affinity — podAntiAffinity on CH pods uses CHI installation name
     # ------------------------------------------------------------------
     {
@@ -418,6 +517,20 @@ def find_container(docs: list[dict], name: str) -> dict:
     if not matches:
         available = [c.get("name") for c in containers]
         raise AssertionError(f"Container '{name}' not found. Available: {available}")
+    return matches[0]
+
+
+def get_init_containers(docs: list[dict]) -> list[dict]:
+    pod = get_pod_template(docs)
+    return deep_get(pod, ["spec", "initContainers"])
+
+
+def find_init_container(docs: list[dict], name: str) -> dict:
+    containers = get_init_containers(docs)
+    matches = [c for c in containers if c.get("name") == name]
+    if not matches:
+        available = [c.get("name") for c in containers]
+        raise AssertionError(f"Init container '{name}' not found. Available: {available}")
     return matches[0]
 
 
@@ -557,6 +670,56 @@ def run_scenario(scenario: dict[str, Any], docs: list[dict]) -> None:
         if str(actual) != str(expected):
             raise AssertionError(
                 f"container '{cname}' env '{env_name}': expected {expected!r}, got {actual!r}"
+            )
+
+    # --- init container present / absent ---
+    if scenario.get("initcontainer_present") or scenario.get("initcontainer_absent"):
+        try:
+            init_containers = get_init_containers(docs)
+        except KeyError:
+            init_containers = []
+        names = [c.get("name") for c in init_containers]
+
+        for cname in scenario.get("initcontainer_present", []):
+            if cname not in names:
+                raise AssertionError(
+                    f"init container '{cname}' must be present. Found: {names}"
+                )
+
+        for cname in scenario.get("initcontainer_absent", []):
+            if cname in names:
+                raise AssertionError(
+                    f"init container '{cname}' must not be present but was found"
+                )
+
+    # --- init container env var assertions ---
+    for cname, env_name, expected in scenario.get("initcontainer_env", []):
+        container = find_init_container(docs, cname)
+        env_list: list[dict] = container.get("env", [])
+        matches = [e for e in env_list if e.get("name") == env_name]
+        if not matches:
+            available = [e.get("name") for e in env_list]
+            raise AssertionError(
+                f"init container '{cname}': env var '{env_name}' not found. Available: {available}"
+            )
+        actual = matches[0].get("value")
+        if str(actual) != str(expected):
+            raise AssertionError(
+                f"init container '{cname}' env '{env_name}': expected {expected!r}, got {actual!r}"
+            )
+
+    # --- init container env var absent assertions ---
+    for cname, env_name in scenario.get("initcontainer_env_absent", []):
+        try:
+            container = find_init_container(docs, cname)
+        except AssertionError:
+            continue  # container absent entirely — env var trivially absent
+        env_list: list[dict] = container.get("env", [])
+        matches = [e for e in env_list if e.get("name") == env_name]
+        if matches:
+            raise AssertionError(
+                f"init container '{cname}': env var '{env_name}' must NOT be set explicitly "
+                f"(it is inherited from the pod env), but was found with value {matches[0].get('value')!r}"
             )
 
     # --- pod anti-affinity uses CHI installation name ---

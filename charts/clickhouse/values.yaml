@@ -204,4 +204,27 @@ config:
         memory: 16Gi
         cpu: 8000m
 
+  migrations:
+    enabled: false
+    image:
+      repository: us-central1-docker.pkg.dev/ma-infrastructure-474617/docker-registry/clickhouse-migrations
+      tag: latest
+    ## Migrations subdirectory to run — e.g. stardust-std, stardust-flow, management-clickhouse.
+    ## Required when migrations.enabled is true.
+    target: ""
+    ## ClickHouse Keeper address. Defaults to the aggregate headless service:
+    ##   keeper-<chk.name>.<namespace>.svc.cluster.local:2181
+    ## Override only for non-standard topologies.
+    keeperAddr: ""
+    gooseCommand: up
+    migrationsDir: /migrations
+    sleepSeconds: 60
+    resources:
+      requests:
+        cpu: 100m
+        memory: 64Mi
+      limits:
+        cpu: 200m
+        memory: 128Mi
+
 extraResources: []
