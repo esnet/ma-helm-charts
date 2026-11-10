@@ -1,0 +1,32 @@
+.github/scripts/test-logstash-config.py
+  h_5c3111fc5355aa 91-177,260-412,484-513
+charts/logstash-config/CHANGELOG.md
+  h_5c3111fc5355aa 3-12
+charts/logstash-config/Chart.yaml
+  h_5c3111fc5355aa 4
+charts/logstash-config/ci/with-image-sources-values.yaml
+  h_5c3111fc5355aa 1-47
+charts/logstash-config/ci/with-inline-sources-values.yaml
+  h_5c3111fc5355aa 1-35
+charts/logstash-config/ci/with-mixed-sources-values.yaml
+  h_5c3111fc5355aa 1-34
+charts/logstash-config/templates/_helpers.tpl
+  h_5c3111fc5355aa 39-80,99-103,113-124,147-161,165,175-179,183-185,194-198
+charts/logstash-config/templates/configmap-inline-sources.yaml
+  h_5c3111fc5355aa 1-17
+charts/logstash-config/templates/logstash.yaml
+  h_5c3111fc5355aa 23,25,73-98,132-134
+charts/logstash-config/values.yaml
+  h_5c3111fc5355aa 58-78,220-223
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "6b7e238d189aa971bad740a6ad36712c26a60426",
+  "prompts": {},
+  "humans": {
+    "h_5c3111fc5355aa": {
+      "author": "Samir Faci <samir@es.net>"
+    }
+  }
+}
