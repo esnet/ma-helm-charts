@@ -1,0 +1,17 @@
+{{- $ctx := . -}}
+{{- $allSources := include "logstash.allSources" (list $ctx) | fromYamlArray -}}
+{{- range $allSources -}}
+{{- if eq .type "inline" }}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ $ctx.Release.Name }}-inline-{{ include "logstash.pad3" .index }}
+  namespace: {{ $ctx.Values.namespace }}
+  labels:
+    {{- include "logstash.labels" $ctx | nindent 4 }}
+data:
+  {{ $ctx.Values.pipeline.prefix }}-{{ include "logstash.pad3" .index }}-inline.conf: |
+    {{- .inline | nindent 4 }}
+{{- end }}
+{{- end }}

@@ -88,6 +88,93 @@ SCENARIOS: list[dict[str, Any]] = [
         "metricsets": ["node_stats"],
         "absent_metricsets": ["node"],
     },
+    {
+        "name": "from-image-sources-init-container-rendered",
+        "values": "ci/with-image-sources-values.yaml",
+        "present": [],
+        "absent": [],
+        "fields": [],
+        "metricbeat_cm_present": False,
+        "metricsets": [],
+        "absent_metricsets": [],
+        "init_containers": ["tls-cert-extractor", "pipeline-copy"],
+        "volumes": ["pipeline-app", "tls-certs"],
+        "volume_mount_paths": [
+            "/usr/share/logstash/pipeline/custom/001",
+            "/usr/share/logstash/pipeline/custom/app",
+        ],
+        "pipeline_copy_files": [
+            "/usr/share/logstash/pipeline-src/snow-020-initial-format.conf",
+            "/usr/share/logstash/pipeline-src/snow-999-outputs.conf",
+        ],
+        "extra_env": ["elastic_hosts"],
+    },
+    {
+        "name": "inline-sources-configmap-rendered",
+        "values": "ci/with-inline-sources-values.yaml",
+        "present": [],
+        "absent": [],
+        "fields": [],
+        "metricbeat_cm_present": False,
+        "metricsets": [],
+        "absent_metricsets": [],
+        "init_containers": [],
+        "absent_init_containers": ["pipeline-copy"],
+        "inline_indices": [50],
+        "volumes": ["pipeline-050"],
+        "volume_mount_paths": [
+            "/usr/share/logstash/pipeline/custom/050",
+        ],
+        "absent_volumes": ["pipeline-app"],
+    },
+    {
+        "name": "mixed-sources-all-types",
+        "values": "ci/with-mixed-sources-values.yaml",
+        "present": [],
+        "absent": [],
+        "fields": [],
+        "metricbeat_cm_present": False,
+        "metricsets": [],
+        "absent_metricsets": [],
+        "init_containers": ["pipeline-copy"],
+        "absent_init_containers": ["tls-cert-extractor"],
+        "inline_indices": [50],
+        "volumes": ["pipeline-020", "pipeline-050", "pipeline-app"],
+        "volume_mount_paths": [
+            "/usr/share/logstash/pipeline/custom/001",
+            "/usr/share/logstash/pipeline/custom/020",
+            "/usr/share/logstash/pipeline/custom/050",
+            "/usr/share/logstash/pipeline/custom/app",
+        ],
+        "pipeline_copy_files": [
+            "/usr/share/logstash/pipeline-src/mix-080-custom.conf",
+        ],
+    },
+    {
+        "name": "backward-compat-transforms-still-work",
+        "values": "ci/with-transforms-values.yaml",
+        "present": [],
+        "absent": [],
+        "fields": [],
+        "metricbeat_cm_present": False,
+        "metricsets": [],
+        "absent_metricsets": [],
+        "absent_init_containers": ["pipeline-copy"],
+        "volumes": ["pipeline-020", "pipeline-090", "pipeline-100"],
+        "absent_volumes": ["pipeline-app"],
+    },
+    {
+        "name": "no-image-sources-no-pipeline-copy",
+        "values": "ci/minimal-values.yaml",
+        "present": [],
+        "absent": [],
+        "fields": [],
+        "metricbeat_cm_present": False,
+        "metricsets": [],
+        "absent_metricsets": [],
+        "absent_init_containers": ["pipeline-copy"],
+        "absent_volumes": ["pipeline-app"],
+    },
 ]
 
 
@@ -170,6 +257,159 @@ def find_metricbeat_configmap(docs: list[dict]) -> dict | None:
     return None
 
 
+def find_logstash_cr(docs: list[dict]) -> dict | None:
+    for doc in docs:
+        if doc.get("kind") == "Logstash":
+            return doc
+    return None
+
+
+def get_init_container_names(docs: list[dict]) -> list[str]:
+    cr = find_logstash_cr(docs)
+    if cr is None:
+        return []
+    init_containers = (
+        cr.get("spec", {})
+        .get("podTemplate", {})
+        .get("spec", {})
+        .get("initContainers", [])
+    )
+    return [c.get("name", "") for c in init_containers]
+
+
+def get_volume_names(docs: list[dict]) -> list[str]:
+    cr = find_logstash_cr(docs)
+    if cr is None:
+        return []
+    volumes = (
+        cr.get("spec", {})
+        .get("podTemplate", {})
+        .get("spec", {})
+        .get("volumes", [])
+    )
+    return [v.get("name", "") for v in volumes]
+
+
+def get_volume_mount_paths(docs: list[dict]) -> list[str]:
+    cr = find_logstash_cr(docs)
+    if cr is None:
+        return []
+    containers = (
+        cr.get("spec", {})
+        .get("podTemplate", {})
+        .get("spec", {})
+        .get("containers", [])
+    )
+    for c in containers:
+        if c.get("name") == "logstash":
+            return [vm.get("mountPath", "") for vm in c.get("volumeMounts", [])]
+    return []
+
+
+def get_pipeline_copy_command(docs: list[dict]) -> str:
+    cr = find_logstash_cr(docs)
+    if cr is None:
+        return ""
+    init_containers = (
+        cr.get("spec", {})
+        .get("podTemplate", {})
+        .get("spec", {})
+        .get("initContainers", [])
+    )
+    for c in init_containers:
+        if c.get("name") == "pipeline-copy":
+            cmd = c.get("command", [])
+            return " ".join(cmd) if isinstance(cmd, list) else str(cmd)
+    return ""
+
+
+def get_env_names(docs: list[dict]) -> list[str]:
+    cr = find_logstash_cr(docs)
+    if cr is None:
+        return []
+    containers = (
+        cr.get("spec", {})
+        .get("podTemplate", {})
+        .get("spec", {})
+        .get("containers", [])
+    )
+    for c in containers:
+        if c.get("name") == "logstash":
+            return [e.get("name", "") for e in c.get("env", [])]
+    return []
+
+
+def check_init_containers(docs: list[dict], required: list[str], absent: list[str]) -> None:
+    names = get_init_container_names(docs)
+    for name in required:
+        if name not in names:
+            raise AssertionError(f"init container {name!r} must be present but was not found in {names!r}")
+    for name in absent:
+        if name in names:
+            raise AssertionError(f"init container {name!r} must not be present but was found in {names!r}")
+
+
+def check_volumes(docs: list[dict], required: list[str], absent: list[str]) -> None:
+    names = get_volume_names(docs)
+    for name in required:
+        if name not in names:
+            raise AssertionError(f"volume {name!r} must be present but was not found in {names!r}")
+    for name in absent:
+        if name in names:
+            raise AssertionError(f"volume {name!r} must not be present but was found in {names!r}")
+
+
+def check_volume_mounts(docs: list[dict], required: list[str], absent: list[str]) -> None:
+    paths = get_volume_mount_paths(docs)
+    for path in required:
+        if path not in paths:
+            raise AssertionError(f"volumeMount {path!r} must be present but was not found in {paths!r}")
+    for path in absent:
+        if path in paths:
+            raise AssertionError(f"volumeMount {path!r} must not be present but was found in {paths!r}")
+
+
+def check_pipeline_copy_copies(docs: list[dict], expected_files: list[str]) -> None:
+    """Assert that the pipeline-copy init container copies each expected file."""
+    cr = find_logstash_cr(docs)
+    if cr is None:
+        raise AssertionError("pipeline-copy check: no Logstash CR found")
+    init_containers = (
+        cr.get("spec", {})
+        .get("podTemplate", {})
+        .get("spec", {})
+        .get("initContainers", [])
+    )
+    copy_container = next((c for c in init_containers if c.get("name") == "pipeline-copy"), None)
+    if copy_container is None:
+        raise AssertionError("pipeline-copy check: pipeline-copy init container not found")
+    # command is [sh, -c, <script>]
+    cmd_list = copy_container.get("command", [])
+    script = cmd_list[2] if len(cmd_list) >= 3 else ""
+    for f in expected_files:
+        if f not in script:
+            raise AssertionError(f"pipeline-copy check: {f!r} not found in init container script")
+
+
+def check_inline_configmaps(docs: list[dict], expected_indices: list[int]) -> None:
+    """Assert that inline ConfigMaps are rendered for each expected index."""
+    for idx in expected_indices:
+        padded = str(idx).zfill(3)
+        found = any(
+            doc.get("kind") == "ConfigMap" and f"inline-{padded}" in doc.get("metadata", {}).get("name", "")
+            for doc in docs
+        )
+        if not found:
+            raise AssertionError(f"inline ConfigMap for index {idx} (inline-{padded}) not found")
+
+
+def check_extra_env(docs: list[dict], required: list[str]) -> None:
+    names = get_env_names(docs)
+    for name in required:
+        if name not in names:
+            raise AssertionError(f"extraEnv {name!r} must be present but was not found in {names!r}")
+
+
 def check_metricsets(docs: list[dict], required: list[str], absent: list[str]) -> None:
     if not required and not absent:
         return
@@ -240,6 +480,36 @@ def run_scenario(scenario: dict[str, Any], docs: list[dict]) -> None:
         scenario.get("metricsets", []),
         scenario.get("absent_metricsets", []),
     )
+
+    if "init_containers" in scenario or "absent_init_containers" in scenario:
+        check_init_containers(
+            docs,
+            scenario.get("init_containers", []),
+            scenario.get("absent_init_containers", []),
+        )
+
+    if "volumes" in scenario or "absent_volumes" in scenario:
+        check_volumes(
+            docs,
+            scenario.get("volumes", []),
+            scenario.get("absent_volumes", []),
+        )
+
+    if "volume_mount_paths" in scenario or "absent_volume_mount_paths" in scenario:
+        check_volume_mounts(
+            docs,
+            scenario.get("volume_mount_paths", []),
+            scenario.get("absent_volume_mount_paths", []),
+        )
+
+    if "pipeline_copy_files" in scenario:
+        check_pipeline_copy_copies(docs, scenario["pipeline_copy_files"])
+
+    if "inline_indices" in scenario:
+        check_inline_configmaps(docs, scenario["inline_indices"])
+
+    if "extra_env" in scenario:
+        check_extra_env(docs, scenario["extra_env"])
 
 
 def main() -> None:

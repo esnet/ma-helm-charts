@@ -1,0 +1,35 @@
+# CI fixture: pipeline.sources with inline type.
+namespace: test-pipeline
+create_ns: true
+
+image:
+  repository: docker.elastic.co/logstash/logstash
+  tag: "9.5.5"
+
+replicas: 1
+
+pipeline:
+  prefix: test
+  sources:
+    - index: 50
+      inline: |
+        filter {
+          mutate {
+            add_field => { "env" => "test" }
+          }
+        }
+
+kafka:
+  enabled: true
+  bootstrapServers: "kafka:9092"
+  topic: test-topic
+  groupId: test-group
+
+elasticsearch:
+  enabled: true
+  hosts:
+    - "https://es:9200"
+  index: test-index
+
+credentials:
+  secretName: test-credentials

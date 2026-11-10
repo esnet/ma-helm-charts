@@ -55,6 +55,27 @@ pipeline:
   #     configMap: bmp-afi-safi
   transforms: []
 
+  # pipeline.sources is the new unified way to declare pipeline config files.
+  # Supports three types — configMap, inline, and fromImage — all ordered by index.
+  # pipeline.transforms still works for backward compatibility.
+  #
+  # Type 1: configMap — reference an external ConfigMap by name (same as transforms)
+  # - index: 20
+  #   configMap: my-transform
+  #
+  # Type 2: inline — provide raw Logstash config content directly
+  # - index: 50
+  #   inline: |
+  #     filter {
+  #       mutate { add_field => { "env" => "staging" } }
+  #     }
+  #
+  # Type 3: fromImage — copy a file from the container image at startup
+  # The chart renders a pipeline-copy init container using the app image.
+  # - index: 20
+  #   fromImage: "/usr/share/logstash/pipeline-src/snow-020-initial-format.conf"
+  sources: []
+
 # Elasticsearch output configuration
 # Set enabled: false to disable the built-in Elasticsearch output ConfigMap entirely.
 # When false, slot 999 is free — provide your own output via pipeline.transforms
@@ -196,3 +217,7 @@ monitoring:
 # chart will mount into the Logstash pod and load via path.config
 # (see pipeline.transforms below).
 extraResources: []
+
+# Extra environment variables injected into the logstash container.
+# These are appended after the chart's own env vars.
+extraEnv: []
