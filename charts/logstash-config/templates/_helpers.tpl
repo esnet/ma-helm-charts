@@ -36,7 +36,48 @@ Hard-fails if the value exceeds 999.
 {{- end }}
 
 {{/*
-Validate a transform index.
+Merge pipeline.transforms (legacy) and pipeline.sources into a single
+normalised list. Each entry has: index (int), type (configMap|inline|fromImage),
+and one of: configMap (string), inline (string), fromImage (string).
+
+Entries from pipeline.transforms are treated as type=configMap for backward compat.
+Entries from pipeline.sources with no explicit type field are inferred from which
+key is present (configMap/inline/fromImage).
+*/}}
+{{- define "logstash.allSources" -}}
+{{- $ctx := index . 0 -}}
+{{- $out := list -}}
+{{- range $ctx.Values.pipeline.transforms -}}
+  {{- $out = append $out (dict "index" (int .index) "type" "configMap" "configMap" .configMap) -}}
+{{- end -}}
+{{- range $ctx.Values.pipeline.sources -}}
+  {{- $type := "" -}}
+  {{- if .type -}}
+    {{- $type = .type -}}
+  {{- else if .configMap -}}
+    {{- $type = "configMap" -}}
+  {{- else if .inline -}}
+    {{- $type = "inline" -}}
+  {{- else if .fromImage -}}
+    {{- $type = "fromImage" -}}
+  {{- else -}}
+    {{- fail (printf "pipeline.sources entry at index %d has no recognisable type (configMap/inline/fromImage)" (int .index)) -}}
+  {{- end -}}
+  {{- $entry := dict "index" (int .index) "type" $type -}}
+  {{- if eq $type "configMap" -}}
+    {{- $entry = merge $entry (dict "configMap" .configMap) -}}
+  {{- else if eq $type "inline" -}}
+    {{- $entry = merge $entry (dict "inline" .inline) -}}
+  {{- else if eq $type "fromImage" -}}
+    {{- $entry = merge $entry (dict "fromImage" .fromImage) -}}
+  {{- end -}}
+  {{- $out = append $out $entry -}}
+{{- end -}}
+{{- toYaml $out -}}
+{{- end -}}
+
+{{/*
+Validate a transform/source index.
 001 is reserved when kafka.enabled is true; 999 is reserved when elasticsearch.enabled is true.
 Call with (list . $index).
 */}}
@@ -55,22 +96,32 @@ Call with (list . $index).
 {{- end }}
 
 {{/*
-Build the full sorted list of pipeline config sources: kafka input (index 1, when enabled),
-user-defined transforms, and elasticsearch output (index 999, when enabled). Uses insertion
-sort on .index. Emits a YAML array of {index, configMap} — parse with fromYamlArray.
+Build the full sorted list of pipeline config sources for volumes/mounts:
+kafka input (index 1, when enabled), configMap and inline sources (by index),
+and elasticsearch output (index 999, when enabled).
+fromImage sources are excluded — they use a shared emptyDir, not per-source volumes.
+Emits a YAML array of {index, configMap} — parse with fromYamlArray.
 Call with (list . transforms): {{ include "logstash.pipelineSources" (list . .Values.pipeline.transforms) }}
 */}}
 {{- define "logstash.pipelineSources" -}}
 {{- $ctx := index . 0 -}}
-{{- $transforms := index . 1 -}}
 {{- $release := $ctx.Release.Name -}}
 {{- $combined := list -}}
 {{- if $ctx.Values.kafka.enabled -}}
   {{- $combined = append $combined (dict "index" 1 "configMap" (printf "%s-kafka-input" $release)) -}}
 {{- end -}}
-{{- range $transforms }}
-{{- $combined = append $combined (dict "index" (int .index) "configMap" .configMap) }}
-{{- end }}
+{{- $allSources := include "logstash.allSources" (list $ctx) | fromYamlArray -}}
+{{- range $allSources -}}
+  {{- if or (eq .type "configMap") (eq .type "inline") -}}
+    {{- $cmName := "" -}}
+    {{- if eq .type "configMap" -}}
+      {{- $cmName = .configMap -}}
+    {{- else -}}
+      {{- $cmName = printf "%s-inline-%s" $release (include "logstash.pad3" .index) -}}
+    {{- end -}}
+    {{- $combined = append $combined (dict "index" (int .index) "configMap" $cmName) -}}
+  {{- end -}}
+{{- end -}}
 {{- if $ctx.Values.elasticsearch.enabled -}}
   {{- $combined = append $combined (dict "index" 999 "configMap" (printf "%s-elasticsearch-output" $release)) -}}
 {{- end -}}
@@ -94,8 +145,24 @@ Call with (list . transforms): {{ include "logstash.pipelineSources" (list . .Va
 {{- end -}}
 
 {{/*
+Return true if any pipeline.sources entry has type fromImage.
+*/}}
+{{- define "logstash.hasImageSources" -}}
+{{- $ctx := index . 0 -}}
+{{- $allSources := include "logstash.allSources" (list $ctx) | fromYamlArray -}}
+{{- $found := false -}}
+{{- range $allSources -}}
+  {{- if eq .type "fromImage" -}}
+    {{- $found = true -}}
+  {{- end -}}
+{{- end -}}
+{{- $found -}}
+{{- end -}}
+
+{{/*
 Render podTemplate volumes — one configMap volume per pipeline source,
 named by its zero-padded index (e.g. "pipeline-020").
+Plus pipeline-app emptyDir when fromImage sources exist.
 Call with (list . transforms): {{ include "logstash.pipelineVolumes" (list . .Values.pipeline.transforms) }}
 */}}
 {{- define "logstash.pipelineVolumes" -}}
@@ -105,14 +172,17 @@ Call with (list . transforms): {{ include "logstash.pipelineVolumes" (list . .Va
   configMap:
     name: {{ .configMap }}
 {{- end }}
+{{- $ctx := index . 0 -}}
+{{- if eq (include "logstash.hasImageSources" (list $ctx)) "true" }}
+- name: pipeline-app
+  emptyDir: {}
+{{- end }}
 {{- end -}}
 
 {{/*
-Render container volumeMounts for the pipeline sources — each mounted into
-its own subdirectory under /usr/share/logstash/pipeline/custom so Logstash's
-recursive glob (see path.config on the Logstash resource) picks them all up,
-without using subPath (which would break ConfigMap live-reload).
-Call with (list . transforms): {{ include "logstash.pipelineVolumeMounts" (list . .Values.pipeline.transforms) }}
+Render container volumeMounts for the pipeline sources.
+ConfigMap/inline sources each mount into their own subdirectory under custom/.
+fromImage sources share the pipeline-app emptyDir at custom/app/.
 */}}
 {{- define "logstash.pipelineVolumeMounts" -}}
 {{- $sources := include "logstash.pipelineSources" . | fromYamlArray -}}
@@ -120,5 +190,10 @@ Call with (list . transforms): {{ include "logstash.pipelineVolumeMounts" (list 
 - name: pipeline-{{ include "logstash.pad3" .index }}
   mountPath: /usr/share/logstash/pipeline/custom/{{ include "logstash.pad3" .index }}
   readOnly: true
+{{- end }}
+{{- $ctx := index . 0 -}}
+{{- if eq (include "logstash.hasImageSources" (list $ctx)) "true" }}
+- name: pipeline-app
+  mountPath: /usr/share/logstash/pipeline/custom/app
 {{- end }}
 {{- end -}}

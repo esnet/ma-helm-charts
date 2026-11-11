@@ -1,0 +1,47 @@
+# CI fixture: pipeline.sources with fromImage type.
+# Simulates the servicenow-pipeline pattern where conf files are baked into the image.
+namespace: servicenow-pipeline
+create_ns: true
+
+image:
+  repository: us-central1-docker.pkg.dev/ma-infrastructure-474617/docker-registry/stardust/servicenow-pipeline
+  tag: "1.0.0"
+
+replicas: 1
+
+pipeline:
+  prefix: snow
+  sources:
+    - index: 20
+      fromImage: "/usr/share/logstash/pipeline-src/snow-020-initial-format.conf"
+    - index: 999
+      fromImage: "/usr/share/logstash/pipeline-src/snow-999-outputs.conf"
+
+kafka:
+  enabled: true
+  bootstrapServers: "34.58.89.239:9095"
+  topic: stardust_servicenow
+  groupId: servicenow-staging
+  autoOffsetReset: latest
+  ssl:
+    enabled: true
+
+elasticsearch:
+  enabled: false
+
+extraEnv:
+  - name: elastic_hosts
+    value: "https://el.gc1.dev.stardust.es.net:9200"
+
+credentials:
+  secretName: servicenow-pipeline-credentials
+
+tlsCertExtractor:
+  enabled: true
+  host: "34.58.89.239"
+  port: 9095
+  outputPath: "/certs"
+  certFileName: "ca"
+  pkcs12Password: "public-nosecret"
+  livenessProbe:
+    enabled: true

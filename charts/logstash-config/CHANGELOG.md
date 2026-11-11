@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.0.3
+
+### Added
+- `pipeline.sources` — unified pipeline config source list supporting three types:
+  - `configMap`: reference an existing ConfigMap by name (same as `pipeline.transforms`)
+  - `inline`: provide raw Logstash config content directly; chart renders a ConfigMap
+  - `fromImage`: copy a file from the app image at startup via an auto-generated `pipeline-copy` init container
+- `extraEnv`: list of extra environment variables appended to the logstash container
+- `pipeline.transforms` remains fully supported for backward compatibility
+
 ## [0.0.2]
 
 ### Fixed

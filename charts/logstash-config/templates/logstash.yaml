@@ -20,8 +20,9 @@ spec:
 
   podTemplate:
     spec:
-{{- if .Values.tlsCertExtractor.enabled }}
+{{- if or .Values.tlsCertExtractor.enabled (eq (include "logstash.hasImageSources" (list .)) "true") }}
       initContainers:
+{{- if .Values.tlsCertExtractor.enabled }}
         - name: tls-cert-extractor
           image: {{ .Values.tlsCertExtractor.image | quote }}
           command:
@@ -70,6 +71,32 @@ spec:
             - name: tls-certs
               mountPath: {{ .Values.tlsCertExtractor.outputPath | quote }}
 {{- end }}
+{{- if eq (include "logstash.hasImageSources" (list .)) "true" }}
+        - name: pipeline-copy
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          command:
+            - sh
+            - -c
+            - |
+              set -eo pipefail
+              DEST=/usr/share/logstash/pipeline/custom/app
+              mkdir -p "${DEST}"
+              echo "[pipeline-copy] Copying fromImage sources..."
+{{- $allSources := include "logstash.allSources" (list .) | fromYamlArray }}
+{{- range $allSources }}
+{{- if eq .type "fromImage" }}
+              cp {{ .fromImage | quote }} "${DEST}/{{ base .fromImage }}"
+              echo "[pipeline-copy] Copied {{ base .fromImage }}"
+{{- end }}
+{{- end }}
+              COUNT=$(ls "${DEST}"/*.conf 2>/dev/null | wc -l | tr -d ' ')
+              [ "${COUNT}" -gt 0 ] || { echo "[pipeline-copy] ERROR: no .conf files copied"; exit 1; }
+              echo "[pipeline-copy] Done (${COUNT} file(s))."
+          volumeMounts:
+            - name: pipeline-app
+              mountPath: /usr/share/logstash/pipeline/custom/app
+{{- end }}
+{{- end }}
       containers:
         - name: logstash
           resources:
@@ -102,6 +129,9 @@ spec:
 {{- end }}
             - name: LS_JAVA_OPTS
               value: "-Xms{{ .Values.jvm.xms }} -Xmx{{ .Values.jvm.xmx }} -XX:+UseG1GC -Djava.awt.headless=true -Dfile.encoding=UTF-8 -Djruby.compile.invokedynamic=true -XX:+HeapDumpOnOutOfMemoryError"
+{{- if .Values.extraEnv }}
+            {{- toYaml .Values.extraEnv | nindent 12 }}
+{{- end }}
           envFrom:
             - secretRef:
                 name: {{ .Values.credentials.secretName }}
